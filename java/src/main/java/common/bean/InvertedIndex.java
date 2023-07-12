@@ -42,6 +42,10 @@ public class InvertedIndex {
         }
     }
 
+    public InvertedIndex(){
+        this.invertedIndex = new HashMap<String, ArrayList<PostingInformation>>();
+    }
+
     public HashMap<String, ArrayList<PostingInformation>> getInvertedIndex() {
         return invertedIndex;
     }
