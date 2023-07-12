@@ -22,7 +22,7 @@ public class Preprocessor {
      * @return A Pair containing Docno and Text.
      */
 
-     static public Pair<Integer,String> parseLine(String line){
+     static public Pair<Integer,String> parseLine(String line) throws IllegalArgumentException{
 
         if (line.isEmpty()){
             // Empty line

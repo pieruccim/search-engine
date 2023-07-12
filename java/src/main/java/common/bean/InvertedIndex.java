@@ -35,10 +35,10 @@ public class InvertedIndex {
 
         @Override
         public String toString() {
-            return "PostingInformation{" +
+            return "{" +
                     "docid=" + this.docid +
                     ", freq=" + this.freq +
-                    '}';
+                    "} -> ";
         }
     }
 
