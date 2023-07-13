@@ -30,6 +30,10 @@ public class IndexManager {
         this.index = new HashMap<String, IndexRecord>();
     }
 
+    public void reset(){
+        this.index = new HashMap<String, IndexRecord>();
+    }
+
     public void addPostings(int docId, HashMap<String, Integer> termCounter){
         for (HashMap.Entry<String, Integer> entry : termCounter.entrySet()) {
             String term = entry.getKey();

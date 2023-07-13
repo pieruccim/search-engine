@@ -47,13 +47,13 @@ public class DocumentIndex {
         this.documentIndex = new HashMap<Integer, DocumentIndexInformation>();
     }
 
-    public HashMap<Integer, DocumentIndexInformation> getDocumentIndex() {
-        return documentIndex;
-    }
+    public HashMap<Integer, DocumentIndexInformation> getDocumentIndex() {return documentIndex;}
 
     public void setDocumentIndex(HashMap<Integer, DocumentIndexInformation> d) {
         this.documentIndex = d;
     }
+
+    public void reset() {this.setDocumentIndex(new HashMap<>());}
 
     public void addInformation(int len, int docid, int docno){
         DocumentIndexInformation newInformation = new DocumentIndex.DocumentIndexInformation(len, docno);

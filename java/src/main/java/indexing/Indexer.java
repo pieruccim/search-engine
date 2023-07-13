@@ -7,10 +7,13 @@ import common.manager.indexing.IndexManager;
 import javafx.util.Pair;
 import preprocessing.Preprocessor;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
 import java.util.HashMap;
 
 public class Indexer {
 
+    static final private int memoryOccupationThreshold = 50;
     static private int docIdCounter = 0;
 
     private DocumentIndex documentIndex;
@@ -21,8 +24,37 @@ public class Indexer {
         this.indexManager = new IndexManager();
     }
 
+    private static float getMemoryUsage(boolean debug){
+        float usedMemoryBytes = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed();
+        float totalMemoryBytes = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getCommitted();
+        float memoryUsagePercentage = (usedMemoryBytes / totalMemoryBytes) * 100;
+
+        if(debug) {
+            System.out.println("Memory occupation percentage: " + Math.round(memoryUsagePercentage * 100.0f) / 100.0f + "%");
+        }
+        return memoryUsagePercentage;
+    }
+
+    private void saveBlock(){
+        System.out.println("Saving block...");
+        // TODO: call FileManager function to save block on disk
+        return;
+    }
+
+    private void resetDataStructures(){
+        documentIndex.reset();
+        indexManager.reset();
+        // Force garbage collector to free memory
+        System.gc();
+    }
+
     private void processDocument(String docText, int docId, int docNo){
-        // TODO: Manage saving of the Block to disk when memory is almost empty (SPiMI)
+
+        // Manage saving of the Block to disk when memory is above threshold (SPiMI Algorithm)
+        if (getMemoryUsage(true) >= memoryOccupationThreshold){
+            saveBlock();
+            resetDataStructures();
+        };
 
         String[] terms = Preprocessor.processText(docText, false);
 
@@ -50,7 +82,7 @@ public class Indexer {
 
         //for (String line: lines) 
         
-        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection200.tsv", MODE.READ);
+        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection20000.tsv", MODE.READ);
 
         String line;
 
@@ -72,7 +104,7 @@ public class Indexer {
             docIdCounter += 1;
         }
 
-        System.out.print(indexManager.toString());
+        //System.out.print(indexManager.toString());
     }
 
     /*
