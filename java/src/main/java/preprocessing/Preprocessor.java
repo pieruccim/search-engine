@@ -31,11 +31,13 @@ public class Preprocessor {
 
         String[] parts = line.trim().split("\t");
 
+        //System.out.println("Document input parts: " + parts.length + "\n docNo: " + parts[0] + "\n text: " + parts[1]);
+
         if (parts.length == 2) {
 
             if (parts[0].isEmpty()){
                 // Empty docno
-                throw new IllegalArgumentException("Docno is empty");
+                throw new IllegalArgumentException("DocNo is empty");
             }
 
             int docno;
@@ -44,7 +46,7 @@ public class Preprocessor {
                 docno = Integer.parseInt(parts[0]);
 
             } catch (Exception e){
-                throw new IllegalArgumentException("Docno not parsable as int");
+                throw new IllegalArgumentException("DocNo not parsable as int");
             }
 
             if (parts[1].isEmpty()){
@@ -63,6 +65,11 @@ public class Preprocessor {
     static private String convertToLowercase(String text){
         // Convert text string to lowercase
         return text.toLowerCase();
+    }
+
+    static private String removeBadCharacters(String text){
+        String pattern = "[^a-z0-9]";
+        return text.replaceAll(pattern, " ");
     }
 
     static private String removeStopwords(String text){
@@ -106,11 +113,13 @@ public class Preprocessor {
     static public String[] processText(String text, boolean debug){
 
         text = convertToLowercase(text);
+        text = removeBadCharacters(text);
         text = removeStopwords(text);
         text = removePunctuation(text);
 
         if (debug){
             System.out.println("Lowercase Text: " + text);
+            System.out.println("Text without bad characters: " + text);
             System.out.println("Text without Stopwords: " + text);
             System.out.println("Text without Punctuation: " + text);
         }

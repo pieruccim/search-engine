@@ -1,29 +1,27 @@
 package indexing;
 
 import common.bean.DocumentIndex;
-import common.bean.InvertedIndex;
-import common.bean.Vocabulary;
-import common.manager.TextualFileManager;
-import common.manager.FileManager.MODE;
+import common.manager.file.TextualFileManager;
+import common.manager.file.FileManager.MODE;
+import common.manager.indexing.IndexManager;
 import javafx.util.Pair;
 import preprocessing.Preprocessor;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class Indexer {
 
-    private Vocabulary vocabulary;
+    static private int docIdCounter = 0;
+
     private DocumentIndex documentIndex;
-    private InvertedIndex invertedIndex;
+    private IndexManager indexManager;
 
     public Indexer(){
-        this.vocabulary = new Vocabulary();
         this.documentIndex = new DocumentIndex();
-        this.invertedIndex = new InvertedIndex();
+        this.indexManager = new IndexManager();
     }
 
-    private void addToIndex(String docText, int docNo){
+    private void processDocument(String docText, int docId, int docNo){
         // TODO: Manage saving of the Block to disk when memory is almost empty (SPiMI)
 
         String[] terms = Preprocessor.processText(docText, false);
@@ -34,17 +32,10 @@ public class Indexer {
             termCounter.put(term, termCounter.containsKey(term) ? termCounter.get(term)+1 : 1);
         }
 
-        /**System.out.println("Docu: " + docNo);
+        // Update Document Index, Vocabulary and InvertedIndex
 
-        for (Map.Entry<String, Integer> entry : termCounter.entrySet()) {
-            String key = entry.getKey();
-            Integer value = entry.getValue();
-            System.out.println("term: " + key + ", counter: " + value);
-        }*/
-
-        // TODO: Update Vocabulary, Posting List, ecc...
-
-        invertedIndex.addPostings(docNo, termCounter);
+        documentIndex.addInformation(docText.length(), docId, docNo);
+        indexManager.addPostings(docId, termCounter);
     }
 
     public void processCorpus(){
@@ -59,7 +50,7 @@ public class Indexer {
 
         //for (String line: lines) 
         
-        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection10.tsv", MODE.READ);
+        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection200.tsv", MODE.READ);
 
         String line;
 
@@ -71,15 +62,17 @@ public class Indexer {
                 lineFormatted = Preprocessor.parseLine(line);
             } catch (IllegalArgumentException e){
                 e.printStackTrace();
+                continue;
             }
 
             int docNo = lineFormatted.getKey();
             String docText = lineFormatted.getValue();
 
-            addToIndex(docText, docNo);
+            processDocument(docText, docIdCounter, docNo);
+            docIdCounter += 1;
         }
 
-        System.out.print("manhattan: " + invertedIndex.toString("manhattan"));
+        System.out.print(indexManager.toString());
     }
 
     /*
