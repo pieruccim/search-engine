@@ -1,4 +1,4 @@
-package common.manager;
+package common.manager.file;
 
 public class BinaryFileManager extends FileManager{
 

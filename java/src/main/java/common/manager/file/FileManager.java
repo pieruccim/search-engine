@@ -1,4 +1,4 @@
-package common.manager;
+package common.manager.file;
 
 import java.io.File;
 import java.io.IOException;
