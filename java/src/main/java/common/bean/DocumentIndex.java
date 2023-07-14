@@ -1,5 +1,7 @@
 package common.bean;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class DocumentIndex {
@@ -49,7 +51,7 @@ public class DocumentIndex {
 
     public HashMap<Integer, DocumentIndexInformation> getDocumentIndex() {return documentIndex;}
 
-    public void setDocumentIndex(HashMap<Integer, DocumentIndexInformation> d) {
+    private void setDocumentIndex(HashMap<Integer, DocumentIndexInformation> d) {
         this.documentIndex = d;
     }
 
@@ -63,5 +65,19 @@ public class DocumentIndex {
     public String toString(Integer docid) {
         DocumentIndex.DocumentIndexInformation information = documentIndex.get(docid);
         return (information != null) ? "Docid: " + docid + ", " + information.toString() : "Docid not found in vocabulary.";
+    }
+
+    /**
+     * @return ArrayList<DocumentIndexFileRecord> the list of the docs that are present in the index, sorted lexicographically
+     */
+    public ArrayList<DocumentIndexFileRecord> getSortedList(){
+        ArrayList<Integer> docIds = new ArrayList<>(this.documentIndex.keySet());
+        Collections.sort(docIds);
+        ArrayList<DocumentIndexFileRecord> ret = new ArrayList<DocumentIndexFileRecord>();
+        for (Integer docId : docIds) {
+            DocumentIndex.DocumentIndexInformation information = this.documentIndex.get(docId);
+            ret.add(new DocumentIndexFileRecord(docId, information.getDocno(), information.getLen()));
+        }
+        return ret;
     }
 }
