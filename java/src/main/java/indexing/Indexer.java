@@ -75,6 +75,33 @@ public class Indexer {
         System.out.print(indexManager.toString());
     }
 
+    /**
+     * this method is in charge to store as file in a block:
+     * - the vocabulary generated during the processing of the docs of the current block
+     * - the document index for the docs of the current block
+     * - the invertedIndex for the current block
+     * The fields for the vocabulary stored on file also need the offset of the inverted index for the posting list of each term,
+     * then we have to process the inverted index before the vocabulary
+     */
+    private void saveBlock(){
+
+        // the first thing to do is to sort the Index by term lexicographically
+
+        // then we can iterate over the index terms one at a time 
+        
+            // store the posting list of that term in the inverted index
+
+            // once that the posting list is saved, we have the length of it on file
+
+            // we can use the offset of the previous posting list + the length of the previous posting list 
+            // to obtain the offset of the posting list of the current term
+
+            // we can now save an entry in the vocabulary with docid, df, cf, offset, docno
+        
+        // in parallel with the creation of the vocabulary and of the inverted index, we can build the documentIndex
+
+    }
+
     /*
         metodi:
             -   metodo leggere un doc alla volta (skippare quelli non validi) e eseguire operazioni di preprocessing
