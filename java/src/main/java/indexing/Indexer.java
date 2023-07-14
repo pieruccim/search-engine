@@ -1,20 +1,29 @@
 package indexing;
 
 import common.bean.DocumentIndex;
+import common.bean.DocumentIndexFileRecord;
+import common.bean.Posting;
+import common.bean.VocabularyFileRecord;
+import common.manager.block.DocumentIndexBlockManager;
+import common.manager.block.InvertedIndexBlockManager;
+import common.manager.block.VocabularyBlockManager;
 import common.manager.file.TextualFileManager;
 import common.manager.file.FileManager.MODE;
 import common.manager.indexing.IndexManager;
+import common.manager.indexing.IndexManager.IndexRecord;
 import javafx.util.Pair;
 import preprocessing.Preprocessor;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Indexer {
 
     static final private int memoryOccupationThreshold = 50;
     static private int docIdCounter = 0;
+    static private int currentBlockNo = 0;
 
     private DocumentIndex documentIndex;
     private IndexManager indexManager;
@@ -35,11 +44,6 @@ public class Indexer {
         return memoryUsagePercentage;
     }
 
-    private void saveBlock(){
-        System.out.println("Saving block...");
-        // TODO: call FileManager function to save block on disk
-        return;
-    }
 
     private void resetDataStructures(){
         documentIndex.reset();
@@ -116,21 +120,74 @@ public class Indexer {
      * then we have to process the inverted index before the vocabulary
      */
     private void saveBlock(){
+        System.out.println("Saving block...");
+
+        // here we need the block number for the current block to load the block managers
+        InvertedIndexBlockManager invertedIndexBlockManager = null;
+        VocabularyBlockManager vocabularyBlockManager = null;
+        DocumentIndexBlockManager documentIndexBlockManager = null;
+        try {
+            invertedIndexBlockManager = new InvertedIndexBlockManager(Indexer.currentBlockNo);
+            vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo);
+            documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo);
+            // the same for the other managers...
+        } catch (Exception e) {
+            e.printStackTrace();
+            // here we must stop the execution
+            System.exit(-1);
+        }
+        
+        
 
         // the first thing to do is to sort the Index by term lexicographically
+        ArrayList<String> terms = this.indexManager.getSortedKeys();
+
+        int invertedIndexOffset = 0;
 
         // then we can iterate over the index terms one at a time 
+        for (String term : terms) {
+            IndexRecord record = this.indexManager.getRecord(term);
         
             // store the posting list of that term in the inverted index
+            ArrayList<Posting> postings = record.getPostingList();
+
+            invertedIndexBlockManager.writeRow(postings);
 
             // once that the posting list is saved, we have the length of it on file
-
-            // we can use the offset of the previous posting list + the length of the previous posting list 
-            // to obtain the offset of the posting list of the current term
+            int currentPostingListLen = ( ( postings.size() ) * 2) ;    // each element is made of two integers
 
             // we can now save an entry in the vocabulary with docid, df, cf, offset, docno
+            VocabularyFileRecord vocabularyRecord = new VocabularyFileRecord(term, record.getCf(), record.getDf(), invertedIndexOffset);
+
+            vocabularyBlockManager.writeRow(vocabularyRecord);
+
+            // we can use the offset of the previous posting list + the length of the previous posting list 
+            // to obtain the offset of the next posting list
+            invertedIndexOffset += currentPostingListLen;
+        }
         
         // in parallel with the creation of the vocabulary and of the inverted index, we can build the documentIndex
+        // TODO: parallelize maybe
+        ArrayList<DocumentIndexFileRecord> documentIndexList = this.documentIndex.getSortedList();
+        for (DocumentIndexFileRecord documentIndexFileRecord : documentIndexList) {
+            documentIndexBlockManager.writeRow(documentIndexFileRecord);
+        }
+
+
+
+        // once the block is saved, we go to the next block, then we have to:
+        // increase the blockNo
+        Indexer.currentBlockNo += 1;
+
+        // close block managers
+        invertedIndexBlockManager.closeBlock();
+        vocabularyBlockManager.closeBlock();
+        documentIndexBlockManager.closeBlock();
+
+        // reset data structures
+        this.resetDataStructures();
+
+        System.out.println("Done");
 
     }
 
