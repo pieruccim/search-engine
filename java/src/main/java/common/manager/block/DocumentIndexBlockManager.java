@@ -9,7 +9,7 @@ public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexF
     protected static String blockDirectory = "/data/output/documentIndexBlocks/";
 
     public DocumentIndexBlockManager(int blockNo) throws IOException {
-        super(blockNo);
+        super(blockNo, blockDirectory);
     }
 
     @Override

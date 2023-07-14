@@ -13,7 +13,7 @@ public interface BlockManager<T> {
         // open in write mode the file where to store data of the current block
 
 
-    public abstract void writeRow(T r);
+    public void writeRow(T r);
         // receives the record to be written in the block, which can either be:
         // - a posting list
         // - a vocabulary row
@@ -22,7 +22,7 @@ public interface BlockManager<T> {
         // then it writes it on disk according to the chosen encoding for the type of block
 
 
-    public abstract boolean closeBlock();
+    public boolean closeBlock();
         // check if the block was already closed
 
         // then tries to close the block from write mode 

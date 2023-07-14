@@ -86,7 +86,7 @@ public class Indexer {
 
         //for (String line: lines) 
         
-        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection20000.tsv", MODE.READ);
+        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ);
 
         String line;
 
@@ -185,7 +185,7 @@ public class Indexer {
         documentIndexBlockManager.closeBlock();
 
         // reset data structures
-        this.resetDataStructures();
+        //this.resetDataStructures();
 
         System.out.println("Done");
 

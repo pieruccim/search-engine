@@ -10,7 +10,7 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
     protected static String blockDirectory = "/data/output/invertedIndexBlocks/";
 
     public InvertedIndexBlockManager(int blockNo) throws IOException{
-        super(blockNo);
+        super(blockNo, blockDirectory);
     }
 
     /**

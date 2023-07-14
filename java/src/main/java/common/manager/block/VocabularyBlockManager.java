@@ -10,7 +10,7 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
     protected static String blockDirectory = "/data/output/vocabularyBlocks/";
 
     public VocabularyBlockManager(int blockNo) throws IOException {
-        super(blockNo);
+        super(blockNo, blockDirectory);
     }
 
     @Override

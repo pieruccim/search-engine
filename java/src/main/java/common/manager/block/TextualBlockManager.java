@@ -2,6 +2,9 @@ package common.manager.block;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+
+import java.nio.file.Paths;
 
 import common.manager.file.FileManager.MODE;
 import common.manager.file.TextualFileManager;
@@ -11,12 +14,14 @@ public abstract class TextualBlockManager<T> implements BlockManager<T> {
     protected int blockNo;
     protected TextualFileManager textualFileManager;
     protected String blockPath = null;
-    
-    protected static String blockDirectory = null;
 
 
 
-    public TextualBlockManager(int blockNo) throws IOException{
+
+    public TextualBlockManager(int blockNo, String blockDirectory) throws IOException{
+        if( ! ( new File(blockDirectory)).exists() ){
+            Files.createDirectories(Paths.get(blockDirectory));
+        }
         this.blockNo = blockNo;
         this.blockPath = blockDirectory + this.blockNo + ".txt";
         this.openNewBlock();
