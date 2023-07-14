@@ -1,6 +1,14 @@
 package common.manager.file;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 public class BinaryFileManager extends FileManager{
+
+    private BufferedOutputStream bufferedOutputStream;
 
     public BinaryFileManager(String filePath) {
         super(filePath);
@@ -11,6 +19,20 @@ public class BinaryFileManager extends FileManager{
     }
 
     @Override
+    protected void initialSetup(String filePath, MODE mode){
+        if(mode == MODE.WRITE){
+            try{
+                this.bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(filePath));
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }else{  //  if(this.mode == MODE.READ)
+            throw new UnsupportedOperationException("Unimplemented method 'initialSetup' for MODE.READ");
+        }
+
+    }
+
+    @Override
     public int readInt() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'readInt'");
@@ -18,14 +40,22 @@ public class BinaryFileManager extends FileManager{
 
     @Override
     public void writeInt(int in) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'writeInt'");
+        try {
+            this.bufferedOutputStream.write(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void close() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'close'");
+        if(this.mode == MODE.WRITE){
+            try{
+                bufferedOutputStream.close();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
     }
 
 }
