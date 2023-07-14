@@ -4,16 +4,17 @@ import common.bean.Posting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class IndexManager {
 
     private HashMap<String, IndexRecord> index;
 
-    private class IndexRecord{
-        int cf = 0;
-        int df = 0;
-        ArrayList<Posting> postingList = new ArrayList<>();
+    public class IndexRecord{
+        private int cf = 0;
+        private int df = 0;
+        private ArrayList<Posting> postingList = new ArrayList<>();
 
         public IndexRecord(int docId, int frequency){
             addPosting(docId, frequency);
@@ -23,6 +24,18 @@ public class IndexManager {
             this.cf += frequency;
             this.df += 1;
             this.postingList.add(new Posting(docId, frequency));
+        }
+
+        public ArrayList<Posting> getPostingList(){
+            return this.postingList;
+        }
+
+        public int getCf() {
+            return this.cf;
+        }
+
+        public int getDf() {
+            return this.df;
         }
     }
 
@@ -50,6 +63,15 @@ public class IndexManager {
                 index.get(term).addPosting(docId, frequency);
             }
         }
+    }
+
+    /**
+     * 
+     * @param term
+     * @return Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
+     */
+    public IndexRecord getRecord(String term){
+        return this.index.get(term);
     }
 
     // Debug method to display entire posting list
@@ -88,4 +110,15 @@ public class IndexManager {
             return result;
         }
     }
+
+    /**
+     * @return ArrayList<String> the list of the terms that are present in the index, sorted lexicographically
+     */
+    public ArrayList<String> getSortedKeys(){
+        ArrayList<String> terms = new ArrayList<>(this.index.keySet());
+        Collections.sort(terms);
+        return terms;
+    }
+
+
 }
