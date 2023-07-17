@@ -44,6 +44,10 @@ public class Indexer {
         return memoryUsagePercentage;
     }
 
+    private static boolean shouldStoreBlock(){
+        return getMemoryUsage(false) >= memoryOccupationThreshold;
+    }
+
 
     private void resetDataStructures(){
         documentIndex.reset();
@@ -55,7 +59,7 @@ public class Indexer {
     private void processDocument(String docText, int docId, int docNo){
 
         // Manage saving of the Block to disk when memory is above threshold (SPiMI Algorithm)
-        if (getMemoryUsage(false) >= 60){
+        if (shouldStoreBlock()){
             saveBlock();
             resetDataStructures();
         };
@@ -123,7 +127,6 @@ public class Indexer {
             invertedIndexBlockManager = new InvertedIndexBlockManager(Indexer.currentBlockNo);
             vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo);
             documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo);
-            // the same for the other managers...
         } catch (Exception e) {
             e.printStackTrace();
             // here we must stop the execution
