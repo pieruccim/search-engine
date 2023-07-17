@@ -21,7 +21,7 @@ import java.util.HashMap;
 
 public class Indexer {
 
-    static final private int memoryOccupationThreshold = 50;
+    static final private int memoryOccupationThreshold = 75;
     static private int docIdCounter = 0;
     static private int currentBlockNo = 0;
 
@@ -39,7 +39,7 @@ public class Indexer {
         float memoryUsagePercentage = (usedMemoryBytes / totalMemoryBytes) * 100;
 
         if(debug) {
-            System.out.println("Memory occupation percentage: " + Math.round(memoryUsagePercentage * 100.0f) / 100.0f + "%");
+            System.out.println("Memory occupation percentage: " + Math.round(memoryUsagePercentage * 100.0f) / 100.0f + "%" + "\t| used memory: " + usedMemoryBytes);
         }
         return memoryUsagePercentage;
     }
@@ -55,7 +55,7 @@ public class Indexer {
     private void processDocument(String docText, int docId, int docNo){
 
         // Manage saving of the Block to disk when memory is above threshold (SPiMI Algorithm)
-        if (getMemoryUsage(true) >= memoryOccupationThreshold){
+        if (getMemoryUsage(false) >= 60){
             saveBlock();
             resetDataStructures();
         };
@@ -97,6 +97,9 @@ public class Indexer {
             processDocument(docText, docIdCounter, docNo);
             docIdCounter += 1;
         }
+
+        saveBlock();
+        resetDataStructures();
 
         //System.out.print(indexManager.toString());
     }
@@ -142,7 +145,7 @@ public class Indexer {
             ArrayList<Posting> postings = record.getPostingList();
 
             try {
-            invertedIndexBlockManager.writeRow(postings);
+                invertedIndexBlockManager.writeRow(postings);
             } catch (Exception e) {
                 System.out.println("could not write row of the inverted index for the posting list of the term "+ term);
                 e.printStackTrace();
@@ -166,9 +169,9 @@ public class Indexer {
         // TODO: parallelize maybe
         ArrayList<DocumentIndexFileRecord> documentIndexList = this.documentIndex.getSortedList();
         try {
-        for (DocumentIndexFileRecord documentIndexFileRecord : documentIndexList) {
-            documentIndexBlockManager.writeRow(documentIndexFileRecord);
-        }
+            for (DocumentIndexFileRecord documentIndexFileRecord : documentIndexList) {
+                documentIndexBlockManager.writeRow(documentIndexFileRecord);
+            }
         } catch (Exception e) {
             System.out.println("Could not store the document index row");
             e.printStackTrace();
