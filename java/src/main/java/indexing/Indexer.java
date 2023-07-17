@@ -91,6 +91,7 @@ public class Indexer {
             try {
                 lineFormatted = Preprocessor.parseLine(line);
             } catch (IllegalArgumentException e){
+                System.out.println("Cannot parse the line: \t"+line);
                 e.printStackTrace();
                 continue;
             }

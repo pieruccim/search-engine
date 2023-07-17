@@ -46,7 +46,8 @@ public class Preprocessor {
                 docno = Integer.parseInt(parts[0]);
 
             } catch (Exception e){
-                throw new IllegalArgumentException("DocNo not parsable as int");
+                e.printStackTrace();
+                throw new IllegalArgumentException("DocNo '"+parts[0]+"' not parsable as int");
             }
 
             if (parts[1].isEmpty()){
