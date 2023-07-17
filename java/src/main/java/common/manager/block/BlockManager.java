@@ -13,7 +13,7 @@ public interface BlockManager<T> {
         // open in write mode the file where to store data of the current block
 
 
-    public void writeRow(T r);
+    public void writeRow(T r) throws Exception;
         // receives the record to be written in the block, which can either be:
         // - a posting list
         // - a vocabulary row

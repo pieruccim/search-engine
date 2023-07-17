@@ -75,16 +75,6 @@ public class Indexer {
     }
 
     public void processCorpus(){
-
-        // TODO: Call to FileManager to retrieve corpus of documents: now is emulated
-        //String[] lines = {  "0\tThe presence of communication amid scientific minds was equally important to the success of the Manhattan Project as scientific intellect was. The only cloud hanging over the impressive achievement of the atomic researchers and engineers is what their success truly meant; hundreds of thousands of innocent lives obliterated.\n",
-        //                    "1\tThe Manhattan Project and its atomic bomb helped bring an end to World War II. Its legacy of peaceful uses of atomic energy continues to have an impact on history and science.\n",
-        //                    "2\tEssay on The Manhattan Project - The Manhattan Project The Manhattan Project was to see if making an atomic bomb possible. The success of this project would forever change the world forever making it known that something this powerful can be manmade.",
-        //                    "3\tThe Manhattan Project was the name for a project conducted during World War II, to develop the first atomic bomb. It refers specifically to the period of the project from 194 Ã¢Â€Â¦ 2-1946 under the control of the U.S. Army Corps of Engineers, under the administration of General Leslie R. Groves.",
-        //                    "4\tversions of each volume as well as complementary websites. The first websiteÃ¢Â€Â“The Manhattan Project: An Interactive HistoryÃ¢Â€Â“is available on the Office of History and Heritage Resources website, http://www.cfo. doe.gov/me70/history. The Office of History and Heritage Resources and the National Nuclear Security",
-        //                    "5\tThe Manhattan Project. This once classified photograph features the first atomic bomb Ã¢Â€Â” a weapon that atomic scientists had nicknamed Gadget.. The nuclear age began on July 16, 1945, when it was detonated in the New Mexico desert."};
-
-        //for (String line: lines) 
         
         TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ);
 
@@ -151,7 +141,13 @@ public class Indexer {
             // store the posting list of that term in the inverted index
             ArrayList<Posting> postings = record.getPostingList();
 
+            try {
             invertedIndexBlockManager.writeRow(postings);
+            } catch (Exception e) {
+                System.out.println("could not write row of the inverted index for the posting list of the term "+ term);
+                e.printStackTrace();
+                System.exit(-1);
+            }
 
             // once that the posting list is saved, we have the length of it on file
             int currentPostingListLen = ( ( postings.size() ) * 2) ;    // each element is made of two integers
@@ -169,9 +165,16 @@ public class Indexer {
         // in parallel with the creation of the vocabulary and of the inverted index, we can build the documentIndex
         // TODO: parallelize maybe
         ArrayList<DocumentIndexFileRecord> documentIndexList = this.documentIndex.getSortedList();
+        try {
         for (DocumentIndexFileRecord documentIndexFileRecord : documentIndexList) {
             documentIndexBlockManager.writeRow(documentIndexFileRecord);
         }
+        } catch (Exception e) {
+            System.out.println("Could not store the document index row");
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        
 
 
 
@@ -186,7 +189,7 @@ public class Indexer {
 
         // reset data structures
         //this.resetDataStructures();
-
+        System.out.println("The block is made of " + terms.size() + " terms and " + documentIndexList.size() + " documents");
         System.out.println("Done");
 
     }

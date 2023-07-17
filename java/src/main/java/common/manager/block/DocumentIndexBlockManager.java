@@ -13,11 +13,13 @@ public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexF
     }
 
     @Override
-    public void writeRow(DocumentIndexFileRecord r) {
-        
+    public void writeRow(DocumentIndexFileRecord r) throws Exception{
+
         this.binaryFileManager.writeInt(r.getDocId());
         this.binaryFileManager.writeInt(r.getDocNo());
         this.binaryFileManager.writeInt(r.getLen());
+
+        
         
     }
     

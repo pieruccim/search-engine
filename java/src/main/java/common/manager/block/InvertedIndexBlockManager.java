@@ -17,11 +17,13 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
      * @param ArrayList<Posting> r a complete posting list for a certain term
      */
     @Override
-    public void writeRow(ArrayList<Posting> r) {
+    public void writeRow(ArrayList<Posting> r) throws Exception{
+
         for (Posting posting : r) {
             this.binaryFileManager.writeInt(posting.getDocid());
             this.binaryFileManager.writeInt(posting.getFreq());
         }
+
         // when we are here, in the binary output file we have r.length * 2 integers
     }
     

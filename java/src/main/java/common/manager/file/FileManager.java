@@ -45,7 +45,7 @@ public abstract class FileManager {
     abstract int readInt();
 
     // metodo per scrivere un intero su file
-    abstract void writeInt(int in);
+    abstract void writeInt(int in) throws Exception;
 
     // metodo per chiudere il file
     abstract void close();

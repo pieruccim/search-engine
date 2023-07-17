@@ -20,6 +20,8 @@ public class BinaryFileManager extends FileManager{
 
     @Override
     protected void initialSetup(String filePath, MODE mode){
+        this.mode = mode;
+        this.filePath = filePath;
         if(mode == MODE.WRITE){
             try{
                 this.bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(filePath));
@@ -39,7 +41,10 @@ public class BinaryFileManager extends FileManager{
     }
 
     @Override
-    public void writeInt(int in) {
+    public void writeInt(int in) throws Exception {
+        if(this.mode != MODE.WRITE){
+            throw new Exception("Binary file manager not in MODE.WRITE\tCannot perform writeInt");
+        }
         try {
             this.bufferedOutputStream.write(in);
         } catch (Exception e) {
