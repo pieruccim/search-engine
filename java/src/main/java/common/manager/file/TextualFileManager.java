@@ -63,6 +63,7 @@ public class TextualFileManager extends FileManager{
                                 this.tarInput.close();
                             }
                             this.tarInput = this.tarGzInput;
+                            //System.out.println("Found entry data file name is " + this.tarInput.getCurrentEntry().getName());
                             break;
                         }else if(entry.getName().endsWith(".tar")){
                             // case in which the tar.gz file contains a .tar archive file in which we have to search for the data file
@@ -72,6 +73,7 @@ public class TextualFileManager extends FileManager{
                             }
                             if(entry.getName().endsWith(".tsv")){
                                 // case in which I have found a tsv file inside the inner tar archive
+                                System.out.println("Found a data file inside the tar whose name is " + entry.getName());
                                 break;
                             }else{
                                 // if I did not find any data file inside the inner archive, I can close it
@@ -86,6 +88,8 @@ public class TextualFileManager extends FileManager{
                         throw new FileNotFoundException("No tsv file found in the given archive "+filePath);
                     }
 
+                    System.out.println("data file name in targz archive is " + entry.getName());
+
                     this.reader = new BufferedReader(new InputStreamReader(this.tarInput, Charset.forName(this.charset)));
                     
                 } catch (FileNotFoundException e) {
@@ -95,13 +99,14 @@ public class TextualFileManager extends FileManager{
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-            }
-            try{
-                this.reader = new BufferedReader(new FileReader(filePath, Charset.forName(this.charset)));
-                //this.reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), TextualFileManager.charset));
-            }catch (IOException e){
-                e.printStackTrace();
-            }
+            }else{
+                try{
+                    this.reader = new BufferedReader(new FileReader(filePath, Charset.forName(this.charset)));
+                    //this.reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), TextualFileManager.charset));
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+        }
         }else{  //  if(this.mode == MODE.WRITE)
             try {
                 // TODO: check if there is overhead introduced by charset encoding

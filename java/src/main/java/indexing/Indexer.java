@@ -80,7 +80,7 @@ public class Indexer {
 
     public void processCorpus(){
         //collection.tar.gz     //test-collection20000.tsv
-        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ, "UTF-16");
+        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\collection.tar.gz", MODE.READ, "UTF-8");
 
         String line;
 
@@ -91,8 +91,9 @@ public class Indexer {
             try {
                 lineFormatted = Preprocessor.parseLine(line);
             } catch (IllegalArgumentException e){
-                System.out.println("Cannot parse the line: \t"+line);
+                System.out.println("Cannot parse the line: \t"+line+"\n\n");
                 e.printStackTrace();
+                //System.exit(-1);
                 continue;
             }
 
