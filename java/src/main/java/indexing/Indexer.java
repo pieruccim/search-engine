@@ -79,8 +79,8 @@ public class Indexer {
     }
 
     public void processCorpus(){
-        
-        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ);
+        //collection.tar.gz     //test-collection20000.tsv
+        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ, "UTF-16");
 
         String line;
 

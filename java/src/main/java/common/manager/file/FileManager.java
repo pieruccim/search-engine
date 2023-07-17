@@ -30,6 +30,10 @@ public abstract class FileManager {
 
     }
 
+    protected FileManager(){
+
+    }
+
     public FileManager(String filePath, MODE mode){
         this.initialSetup(filePath, mode);
     }
