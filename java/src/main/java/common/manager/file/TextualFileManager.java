@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
+
+import jdk.jshell.spi.ExecutionControl;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -135,6 +137,11 @@ public class TextualFileManager extends FileManager{
             //e.printStackTrace();
             return -1;
         }
+    }
+
+    @Override
+    int readInt(int offset) throws Exception {
+        throw new ExecutionControl.NotImplementedException("not implemented yet");
     }
 
     /**

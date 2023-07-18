@@ -1,4 +1,4 @@
-package common.manager.indexing;
+package indexing.manager;
 
 import common.bean.Posting;
 
