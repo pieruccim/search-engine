@@ -52,15 +52,29 @@ public abstract class TextualBlockManager<T> implements BlockManager<T> {
         this.textualFileManager = new TextualFileManager(this.blockPath, MODE.READ, "UTF-8");
     };
 
-    protected void openNewBlock() throws IOException{
+    protected void openNewBlock() throws IOException {
         File f = new File(this.blockPath);
-        if(f.exists()) {
-            throw new IOException("file already exists");
-            // consider if it would be better to delete the old one instead of throwing the exception
+        if (f.exists()) {
+            // Delete the existing folders
+            emptyPath(f);
         }
         this.textualFileManager = new TextualFileManager(this.blockPath, MODE.WRITE);
     }
 
+    private void emptyPath(File file) throws IOException {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File subFile : files) {
+                    emptyPath(subFile);
+                }
+            }
+        }
+
+        if (!file.delete()) {
+            throw new IOException("Failed to delete file: " + file.getAbsolutePath());
+        }
+    }
 
 
     @Override

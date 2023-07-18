@@ -40,14 +40,31 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
         }
     }
 
-    protected void openNewBlock() throws IOException{
+    protected void openNewBlock() throws IOException {
         File f = new File(this.blockPath);
-        if(f.exists()) {
-            throw new IOException("file already exists");
-            // consider if it would be better to delete the old one instead of throwing the exception
+        if (f.exists()) {
+            // Delete the existing folders
+            emptyPath(f);
         }
+
         this.binaryFileManager = new BinaryFileManager(this.blockPath, MODE.WRITE);
     }
+
+    private void emptyPath(File file) throws IOException {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File subFile : files) {
+                    emptyPath(subFile);
+                }
+            }
+        }
+
+        if (!file.delete()) {
+            throw new IOException("Failed to delete file or directory: " + file.getAbsolutePath());
+        }
+    }
+
 
     protected void openBlock() throws IOException {
         File f = new File(this.blockPath);
