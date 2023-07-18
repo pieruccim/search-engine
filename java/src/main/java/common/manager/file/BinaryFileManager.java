@@ -50,6 +50,34 @@ public class BinaryFileManager extends FileManager {
         }
     }
 
+    /**
+     *
+     * @param offset represents the number of integers from the beginning of the file
+     * @return the read integer
+     * @throws Exception
+     */
+    @Override
+    public int readInt(int offset) throws Exception {
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readInt");
+        }
+
+        try {
+            offset = offset * (Integer.SIZE / 8); // TODO: check
+            dataInputStream.reset(); // Reset to the beginning of the stream
+            dataInputStream.skipBytes(offset); // Skip bytes to reach the specified offset
+            int value = dataInputStream.readInt(); // Read the integer
+
+            return value;
+        } catch (EOFException e) {
+            throw new Exception("End of file reached while reading integer");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new Exception("Error reading integer from the binary file");
+        }
+    }
+
+
     @Override
     public void writeInt(int in) throws Exception {
         if(this.mode != MODE.WRITE){

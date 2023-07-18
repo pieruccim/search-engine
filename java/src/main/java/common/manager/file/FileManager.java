@@ -48,6 +48,9 @@ public abstract class FileManager {
     // metodo per leggere un intero da file
     abstract int readInt() throws Exception;
 
+    // method to read int starting from offset
+    abstract int readInt(int offset) throws Exception;
+
     // metodo per scrivere un intero su file
     abstract void writeInt(int in) throws Exception;
 
