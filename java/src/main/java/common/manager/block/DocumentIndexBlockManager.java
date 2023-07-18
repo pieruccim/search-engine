@@ -7,7 +7,7 @@ import common.manager.file.FileManager;
 
 public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexFileRecord>{
 
-    protected static String blockDirectory = "/data/output/documentIndexBlocks/";
+    protected static String blockDirectory = System.getProperty("user.dir") + "/src/main/java/data/output/documentIndexBlocks/";
 
     public DocumentIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException {
         super(blockNo, blockDirectory, mode);

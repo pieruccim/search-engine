@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Posting>> {
 
-    protected static String blockDirectory = "/data/output/invertedIndexBlocks/";
+    protected static String blockDirectory = System.getProperty("user.dir") + "/src/main/java/data/output/invertedIndexBlocks/";
 
     public InvertedIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException{
         super(blockNo, blockDirectory, mode);

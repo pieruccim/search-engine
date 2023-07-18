@@ -9,7 +9,7 @@ import common.manager.file.FileManager;
 
 public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRecord>{
 
-    protected static String blockDirectory = "/data/output/vocabularyBlocks/";
+    protected static String blockDirectory = System.getProperty("user.dir") + "/src/main/java/data/output/vocabularyBlocks/";
 
     public VocabularyBlockManager(int blockNo, FileManager.MODE mode) throws IOException {
         super(blockNo, blockDirectory, mode);
