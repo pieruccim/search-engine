@@ -9,16 +9,16 @@ import common.manager.block.InvertedIndexBlockManager;
 import common.manager.block.VocabularyBlockManager;
 import common.manager.file.TextualFileManager;
 import common.manager.file.FileManager.MODE;
-import common.manager.indexing.IndexManager;
-import common.manager.indexing.IndexManager.IndexRecord;
+import indexing.manager.IndexManager;
+import indexing.manager.IndexManager.IndexRecord;
 import javafx.util.Pair;
 import preprocessing.Preprocessor;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 public class Indexer {
@@ -82,7 +82,7 @@ public class Indexer {
 
     public void processCorpus(){
         //collection.tar.gz     //test-collection20000.tsv
-        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection10.tsv", MODE.READ, "UTF-8");
+        TextualFileManager txt = new TextualFileManager("C:\\Users\\nello\\Documents\\Intellij Projects\\search-engine\\test-collection20000.tsv", MODE.READ, "UTF-16");
 
         String line;
 
@@ -237,10 +237,10 @@ public class Indexer {
                 e.printStackTrace();
             }
             mergeDocumentIndexBlock(documentIndexBlockManagerReader, documentIndexBlockManagerWriter);
+            documentIndexBlockManagerReader.closeBlock();
         }
-        // Close file managers
+        // Close file manager
         documentIndexBlockManagerWriter.closeBlock();
-        documentIndexBlockManagerReader.closeBlock();
     }
 
     private void mergeDocumentIndexBlock(DocumentIndexBlockManager documentIndexBlockManagerReader,
@@ -272,14 +272,18 @@ public class Indexer {
         VocabularyBlockManager[] arrayVocabularyManagers = new VocabularyBlockManager[currentBlockNo];
         InvertedIndexBlockManager[] arrayIndexManagers = new InvertedIndexBlockManager[currentBlockNo];
 
-        VocabularyFileRecord[] fileRecords = new VocabularyFileRecord[currentBlockNo];
-        HashMap<String, Integer> termBlock = new HashMap<>();
+        VocabularyFileRecord[] vocabularyFileRecords = new VocabularyFileRecord[currentBlockNo];
+        ArrayList<Pair<String, Integer>> termBlockList = new ArrayList<>();
+
+        int mergedPostingListOffset = 0;
 
         for (int i = 0; i < currentBlockNo; i++) {
             try {
                 arrayVocabularyManagers[i] = new VocabularyBlockManager(i, MODE.READ);
-                fileRecords[i] = arrayVocabularyManagers[i].readRow();
-                termBlock.put(fileRecords[i].getTerm(), i);
+                vocabularyFileRecords[i] = arrayVocabularyManagers[i].readRow();
+                if (vocabularyFileRecords[i] != null){
+                    termBlockList.add(new Pair<String, Integer>(vocabularyFileRecords[i].getTerm(), i));
+                }
                 arrayIndexManagers[i] = new InvertedIndexBlockManager(i, MODE.READ);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -288,17 +292,80 @@ public class Indexer {
             }
         }
 
-        ArrayList<String> keys = new ArrayList<>(termBlock.keySet());
-        Collections.sort(keys);
+        while (!termBlockList.isEmpty()) {
+            termBlockList.sort(new Comparator<Pair<String, Integer>>() {
+                @Override
+                public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
 
-        int block = termBlock.get(keys.get(0));
+                    int val = o1.getKey().compareTo(o2.getKey());
+
+                    switch (val) {
+                        case 0:
+                            if (o1.getValue() > o2.getValue()) {
+                                return 1;
+                            } else if (o1.getValue() < o2.getValue()) {
+                                return -1;
+                            } else {
+                                System.out.println("Found two identical pairs: " + o1.getKey() + "-" + o1.getValue());
+                                return 0;
+                            }
+
+                        default:
+                            return val;
+
+                    }
+
+                }
+            });
+
+
+            // block of the min lexicographic term between all first terms of each block
+            String termLexMin = termBlockList.get(0).getKey();
+
+            //int index = 0;
+            int cf = 0;
+            int df = 0;
+            ArrayList<Posting> postingList = new ArrayList<>();
+            while (true) {
+                Pair<String, Integer> pair = termBlockList.get(0);
+                if (!pair.getKey().equals(termLexMin)) {
+                    break;
+                }
+                int blockId = pair.getValue();
+                cf += vocabularyFileRecords[blockId].getCf();
+                int tmpDf = vocabularyFileRecords[blockId].getDf();
+                df += tmpDf;
+                int tmpOffset = vocabularyFileRecords[blockId].getOffset();
+                try {
+                    postingList.addAll(arrayIndexManagers[blockId].readRow(tmpOffset, tmpDf));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                try {
+                    vocabularyFileRecords[blockId] = arrayVocabularyManagers[blockId].readRow();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                termBlockList.remove(0);
+                if (vocabularyFileRecords[blockId] != null) {
+                    termBlockList.add(new Pair<String, Integer>(vocabularyFileRecords[blockId].getTerm(), blockId));
+                }
+            }
+            VocabularyFileRecord mergedVocabularyFileRecord = new VocabularyFileRecord(termLexMin, cf, df, mergedPostingListOffset);
+            mergedPostingListOffset += postingList.size() * 2;
+
+            try {
+                // add the posting list to the resulting inverted index
+                mergedInvertedIndexBlockManager.writeRow(postingList);
+                mergedVocabularyBlockManager.writeRow(mergedVocabularyFileRecord);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
 
     }
 
-    /*
-        metodi:
-            -   metodo leggere un doc alla volta (skippare quelli non validi) e eseguire operazioni di preprocessing
-            -   metodo che prende l'output del modulo di preprocessing (lista di token) per aggiornare vocabolario,
-                creare entry del document index e aggiornare posting list del termine
-     */
 }
