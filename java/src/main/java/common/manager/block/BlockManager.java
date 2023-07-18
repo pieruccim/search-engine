@@ -21,6 +21,12 @@ public interface BlockManager<T> {
 
         // then it writes it on disk according to the chosen encoding for the type of block
 
+    public T readRow() throws Exception;
+        // returns null when:
+        //  -   block is completely read
+        //  -   file is not open in read mode
+        //  -   file to be read is malformed
+
 
     public boolean closeBlock();
         // check if the block was already closed
