@@ -14,6 +14,7 @@ import common.manager.indexing.IndexManager.IndexRecord;
 import javafx.util.Pair;
 import preprocessing.Preprocessor;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class Indexer {
 
     public void processCorpus(){
         //collection.tar.gz     //test-collection20000.tsv
-        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\collection.tar.gz", MODE.READ, "UTF-8");
+        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection200000.tsv", MODE.READ, "UTF-16");
 
         String line;
 
@@ -126,9 +127,9 @@ public class Indexer {
         VocabularyBlockManager vocabularyBlockManager = null;
         DocumentIndexBlockManager documentIndexBlockManager = null;
         try {
-            invertedIndexBlockManager = new InvertedIndexBlockManager(Indexer.currentBlockNo);
+            invertedIndexBlockManager = new InvertedIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
             vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo);
-            documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo);
+            documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
         } catch (Exception e) {
             e.printStackTrace();
             // here we must stop the execution
@@ -200,6 +201,58 @@ public class Indexer {
         System.out.println("The block is made of " + terms.size() + " terms and " + documentIndexList.size() + " documents");
         System.out.println("Done");
 
+    }
+
+    /**
+     * This method is in charge of:
+     *  -   opening all blocks
+     *  -   loading to memory first term of each block
+     *  -   sorting the terms in a lexicographic manner
+     *  -   saving the first one to a new file (merged block)
+     */
+
+    public void mergeDataStructures(){
+        mergeDocumentIndex();
+
+        // TODO: implement merging functions for Inverted Index and Vocabulary
+    }
+
+    public void mergeDocumentIndex(){
+
+        DocumentIndexBlockManager documentIndexBlockManagerReader = null;
+        DocumentIndexBlockManager documentIndexBlockManagerWriter = null;
+
+        try {
+             documentIndexBlockManagerWriter = new DocumentIndexBlockManager("merged-document-index", MODE.WRITE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < currentBlockNo; i++) {
+
+            try {
+                documentIndexBlockManagerReader = new DocumentIndexBlockManager(i, MODE.READ);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mergeDocumentIndexBlock(documentIndexBlockManagerReader, documentIndexBlockManagerWriter);
+        }
+        // Close file managers
+        documentIndexBlockManagerWriter.closeBlock();
+        documentIndexBlockManagerReader.closeBlock();
+    }
+
+    private void mergeDocumentIndexBlock(DocumentIndexBlockManager documentIndexBlockManagerReader,
+                                         DocumentIndexBlockManager documentIndexBlockManagerWriter){
+        DocumentIndexFileRecord record;
+        try {
+            while ((record = documentIndexBlockManagerReader.readRow()) != null) {
+                // System.out.println("docId: " + record.getDocId() + ", docNo: " + record.getDocNo() + ", len: " + record.getLen());
+                documentIndexBlockManagerWriter.writeRow(record);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // handle the exception appropriately
+        }
     }
 
     /*
