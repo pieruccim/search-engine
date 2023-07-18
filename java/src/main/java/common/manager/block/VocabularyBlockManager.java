@@ -40,9 +40,4 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
         return new VocabularyFileRecord(arrayString[0], Integer.parseInt(arrayString[1]), Integer.parseInt(arrayString[2]), Integer.parseInt(arrayString[3]));
     }
 
-    @Override
-    public VocabularyFileRecord readRow(int offset, int numPostings) throws Exception {
-        throw new ExecutionControl.NotImplementedException("not implemented yet");
-    }
-
 }

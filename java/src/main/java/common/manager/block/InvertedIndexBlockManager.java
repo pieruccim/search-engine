@@ -40,7 +40,6 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
         return null;
     }
 
-    @Override
     public ArrayList<Posting> readRow(int offset, int numPostings) throws Exception {
 
         ArrayList<Posting> postingList = new ArrayList<>();

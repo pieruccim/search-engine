@@ -27,8 +27,6 @@ public interface BlockManager<T> {
         //  -   file is not open in read mode
         //  -   file to be read is malformed
 
-    public T readRow(int offset, int numPostings) throws Exception;
-
     public boolean closeBlock();
         // check if the block was already closed
 
