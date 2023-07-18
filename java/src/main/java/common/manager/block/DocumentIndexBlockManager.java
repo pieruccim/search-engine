@@ -3,13 +3,18 @@ package common.manager.block;
 import java.io.IOException;
 
 import common.bean.DocumentIndexFileRecord;
+import common.manager.file.FileManager;
 
 public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexFileRecord>{
 
     protected static String blockDirectory = "/data/output/documentIndexBlocks/";
 
-    public DocumentIndexBlockManager(int blockNo) throws IOException {
-        super(blockNo, blockDirectory);
+    public DocumentIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException {
+        super(blockNo, blockDirectory, mode);
+    }
+
+    public DocumentIndexBlockManager(String blockName, FileManager.MODE mode) throws IOException {
+        super(blockName, blockDirectory, mode);
     }
 
     @Override
@@ -19,8 +24,24 @@ public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexF
         this.binaryFileManager.writeInt(r.getDocNo());
         this.binaryFileManager.writeInt(r.getLen());
 
-        
-        
+    }
+
+    @Override
+    public DocumentIndexFileRecord readRow(){
+
+        int docId = 0;
+        int docNo = 0;
+        int len = 0;
+
+        try {
+            docId = binaryFileManager.readInt();
+            docNo = binaryFileManager.readInt();
+            len = binaryFileManager.readInt();
+        } catch (Exception e){
+            return null;
+        }
+
+        return new DocumentIndexFileRecord(docId, docNo, len);
     }
     
 }

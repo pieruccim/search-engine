@@ -17,5 +17,10 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
     public void writeRow(VocabularyFileRecord r) {
         this.textualFileManager.writeLine(r.getTerm() + " " + r.getCf() + " " + r.getDf() + " " + r.getOffset());
     }
-    
+
+    @Override
+    public VocabularyFileRecord readRow() throws Exception {
+        return null;
+    }
+
 }

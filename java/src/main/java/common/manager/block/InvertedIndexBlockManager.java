@@ -1,6 +1,7 @@
 package common.manager.block;
 
 import common.bean.Posting;
+import common.manager.file.FileManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,12 +10,12 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
 
     protected static String blockDirectory = "/data/output/invertedIndexBlocks/";
 
-    public InvertedIndexBlockManager(int blockNo) throws IOException{
-        super(blockNo, blockDirectory);
+    public InvertedIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException{
+        super(blockNo, blockDirectory, mode);
     }
 
     /**
-     * @param ArrayList<Posting> r a complete posting list for a certain term
+     * @param r<Posting> r a complete posting list for a certain term
      */
     @Override
     public void writeRow(ArrayList<Posting> r) throws Exception{
@@ -26,5 +27,11 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
 
         // when we are here, in the binary output file we have r.length * 2 integers
     }
-    
+
+    @Override
+    public ArrayList<Posting> readRow() throws Exception {
+
+        return null;
+    }
+
 }
