@@ -9,7 +9,7 @@ public class UsageExample {
 
         Indexer indexer = new Indexer();
         indexer.processCorpus();
-        indexer.mergeDocumentIndex();
+        indexer.mergeDataStructures();
 
     }
 }

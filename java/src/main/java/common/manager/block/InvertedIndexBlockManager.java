@@ -14,6 +14,10 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
         super(blockNo, blockDirectory, mode);
     }
 
+    public InvertedIndexBlockManager(String blockName, FileManager.MODE mode) throws IOException{
+        super(blockName, blockDirectory, mode);
+    }
+
     /**
      * @param r<Posting> r a complete posting list for a certain term
      */

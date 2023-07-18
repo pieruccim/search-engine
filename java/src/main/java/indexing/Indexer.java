@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class Indexer {
@@ -81,7 +82,7 @@ public class Indexer {
 
     public void processCorpus(){
         //collection.tar.gz     //test-collection20000.tsv
-        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection200000.tsv", MODE.READ, "UTF-16");
+        TextualFileManager txt = new TextualFileManager("C:\\progettiGitHub\\search-engine\\test-collection10.tsv", MODE.READ, "UTF-8");
 
         String line;
 
@@ -128,7 +129,7 @@ public class Indexer {
         DocumentIndexBlockManager documentIndexBlockManager = null;
         try {
             invertedIndexBlockManager = new InvertedIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
-            vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo);
+            vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo, MODE.WRITE);
             documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
         } catch (Exception e) {
             e.printStackTrace();
@@ -213,11 +214,11 @@ public class Indexer {
 
     public void mergeDataStructures(){
         mergeDocumentIndex();
-
+        mergeInvertedIndex();
         // TODO: implement merging functions for Inverted Index and Vocabulary
     }
 
-    public void mergeDocumentIndex(){
+    private void mergeDocumentIndex(){
 
         DocumentIndexBlockManager documentIndexBlockManagerReader = null;
         DocumentIndexBlockManager documentIndexBlockManagerWriter = null;
@@ -253,6 +254,45 @@ public class Indexer {
         } catch (Exception e) {
             e.printStackTrace(); // handle the exception appropriately
         }
+    }
+
+    private void mergeInvertedIndex(){
+
+        // new files for merged vocabulary and inverted index
+        VocabularyBlockManager mergedVocabularyBlockManager = null;
+        InvertedIndexBlockManager mergedInvertedIndexBlockManager = null;
+        try {
+            mergedVocabularyBlockManager = new VocabularyBlockManager( "merged-vocabulary", MODE.WRITE);
+            mergedInvertedIndexBlockManager = new InvertedIndexBlockManager("merged-inverted-index", MODE.WRITE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // open vocabulary and inverted index block files
+        VocabularyBlockManager[] arrayVocabularyManagers = new VocabularyBlockManager[currentBlockNo];
+        InvertedIndexBlockManager[] arrayIndexManagers = new InvertedIndexBlockManager[currentBlockNo];
+
+        VocabularyFileRecord[] fileRecords = new VocabularyFileRecord[currentBlockNo];
+        HashMap<String, Integer> termBlock = new HashMap<>();
+
+        for (int i = 0; i < currentBlockNo; i++) {
+            try {
+                arrayVocabularyManagers[i] = new VocabularyBlockManager(i, MODE.READ);
+                fileRecords[i] = arrayVocabularyManagers[i].readRow();
+                termBlock.put(fileRecords[i].getTerm(), i);
+                arrayIndexManagers[i] = new InvertedIndexBlockManager(i, MODE.READ);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        ArrayList<String> keys = new ArrayList<>(termBlock.keySet());
+        Collections.sort(keys);
+
+        int block = termBlock.get(keys.get(0));
+
     }
 
     /*
