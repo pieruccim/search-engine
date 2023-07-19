@@ -1,10 +1,11 @@
 package common.manager.block;
 
-import java.io.IOException;
+
 
 public interface BlockManager<T> {
 
     static String blockPath = null;
+
 
 
     //protected abstract void openNewBlock() throws IOException;

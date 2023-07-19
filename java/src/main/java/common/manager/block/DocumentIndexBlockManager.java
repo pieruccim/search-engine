@@ -1,5 +1,6 @@
 package common.manager.block;
 
+import java.io.EOFException;
 import java.io.IOException;
 
 import common.bean.DocumentIndexFileRecord;
@@ -38,9 +39,11 @@ public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexF
             docId = binaryFileManager.readInt();
             docNo = binaryFileManager.readInt();
             len = binaryFileManager.readInt();
+        } catch (EOFException e){
+            return null;
         } catch (Exception e){
             return null;
-        }
+        } 
 
         return new DocumentIndexFileRecord(docId, docNo, len);
     }

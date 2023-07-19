@@ -1,3 +1,4 @@
 .vscode/
 collection.tsv
 java/target/
+src/main/java/data/*

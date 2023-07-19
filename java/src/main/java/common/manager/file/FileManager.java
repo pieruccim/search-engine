@@ -49,7 +49,7 @@ public abstract class FileManager {
     abstract int readInt() throws Exception;
 
     // method to read int starting from offset
-    abstract int readInt(int offset) throws Exception;
+    abstract int readInt(long offset) throws Exception;
 
     // metodo per scrivere un intero su file
     abstract void writeInt(int in) throws Exception;

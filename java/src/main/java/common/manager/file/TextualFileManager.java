@@ -140,7 +140,7 @@ public class TextualFileManager extends FileManager{
     }
 
     @Override
-    int readInt(int offset) throws Exception {
+    int readInt(long offset) throws Exception {
         throw new ExecutionControl.NotImplementedException("not implemented yet");
     }
 

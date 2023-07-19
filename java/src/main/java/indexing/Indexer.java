@@ -82,7 +82,9 @@ public class Indexer {
 
     public void processCorpus(){
         //collection.tar.gz     //test-collection20000.tsv
-        TextualFileManager txt = new TextualFileManager("C:\\Users\\nello\\Documents\\Intellij Projects\\search-engine\\test-collection20000.tsv", MODE.READ, "UTF-16");
+        // C:\\Users\\nello\\Documents\\Intellij Projects\\search-engine\\test-collection20000.tsv
+        // 
+        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ, "UTF-16");
 
         String line;
 
@@ -150,6 +152,10 @@ public class Indexer {
         
             // store the posting list of that term in the inverted index
             ArrayList<Posting> postings = record.getPostingList();
+
+            //if(term.equals("manhattan")){
+            //    System.out.println("durante la saveBlock\tmanhattan: \t" + postings.toString());
+            //}
 
             try {
                 invertedIndexBlockManager.writeRow(postings);
@@ -229,31 +235,45 @@ public class Indexer {
             e.printStackTrace();
         }
 
+        int howMany;
+
         for (int i = 0; i < currentBlockNo; i++) {
 
             try {
                 documentIndexBlockManagerReader = new DocumentIndexBlockManager(i, MODE.READ);
+                documentIndexBlockManagerReader.checkDebug("inside try block of the constructor");
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            mergeDocumentIndexBlock(documentIndexBlockManagerReader, documentIndexBlockManagerWriter);
+            documentIndexBlockManagerReader.checkDebug("before calling merge document index");
+            howMany = mergeDocumentIndexBlock(documentIndexBlockManagerReader, documentIndexBlockManagerWriter);
+            //System.out.println("Merged " + howMany + " read records from the block " + documentIndexBlockManagerReader.getBlockPath());
+            documentIndexBlockManagerReader.checkDebug("after method mergeDocumentIndexBlock");
             documentIndexBlockManagerReader.closeBlock();
         }
         // Close file manager
         documentIndexBlockManagerWriter.closeBlock();
     }
 
-    private void mergeDocumentIndexBlock(DocumentIndexBlockManager documentIndexBlockManagerReader,
+    /**
+     * reads all the rows of the given documentIndexBlockManagerReader until the end of the file
+     * writes the read rows to the given documentIndexBlockManagerWriter
+     * @return int the amount of rows read
+     */
+    private int mergeDocumentIndexBlock(DocumentIndexBlockManager documentIndexBlockManagerReader,
                                          DocumentIndexBlockManager documentIndexBlockManagerWriter){
         DocumentIndexFileRecord record;
+        int howMany = 0;
         try {
             while ((record = documentIndexBlockManagerReader.readRow()) != null) {
                 // System.out.println("docId: " + record.getDocId() + ", docNo: " + record.getDocNo() + ", len: " + record.getLen());
                 documentIndexBlockManagerWriter.writeRow(record);
+                howMany += 1;
             }
         } catch (Exception e) {
             e.printStackTrace(); // handle the exception appropriately
         }
+        return howMany;
     }
 
     private void mergeInvertedIndex(){
@@ -326,7 +346,7 @@ public class Indexer {
             int cf = 0;
             int df = 0;
             ArrayList<Posting> postingList = new ArrayList<>();
-            while (true) {
+            while ( ! termBlockList.isEmpty() ) {
                 Pair<String, Integer> pair = termBlockList.get(0);
                 if (!pair.getKey().equals(termLexMin)) {
                     break;
@@ -339,17 +359,23 @@ public class Indexer {
                 try {
                     postingList.addAll(arrayIndexManagers[blockId].readRow(tmpOffset, tmpDf));
                 } catch (Exception e) {
+                    e.printStackTrace();
                     throw new RuntimeException(e);
                 }
 
                 try {
                     vocabularyFileRecords[blockId] = arrayVocabularyManagers[blockId].readRow();
                 } catch (Exception e) {
+                    e.printStackTrace();
                     throw new RuntimeException(e);
                 }
                 termBlockList.remove(0);
                 if (vocabularyFileRecords[blockId] != null) {
                     termBlockList.add(new Pair<String, Integer>(vocabularyFileRecords[blockId].getTerm(), blockId));
+                }else{
+                    // if the vocabulary for the block blockID is finished, we have to close its managers
+                    arrayVocabularyManagers[blockId].closeBlock();
+                    arrayIndexManagers[blockId].closeBlock();
                 }
             }
             VocabularyFileRecord mergedVocabularyFileRecord = new VocabularyFileRecord(termLexMin, cf, df, mergedPostingListOffset);
@@ -357,6 +383,9 @@ public class Indexer {
 
             try {
                 // add the posting list to the resulting inverted index
+                //if(termLexMin.equals("manhattan")){
+                //    System.out.println("durante la mergeBlock\tmanhattan: \t" + postingList.toString());
+                //}
                 mergedInvertedIndexBlockManager.writeRow(postingList);
                 mergedVocabularyBlockManager.writeRow(mergedVocabularyFileRecord);
             } catch (Exception e) {
@@ -364,6 +393,8 @@ public class Indexer {
             }
 
         }
+        mergedInvertedIndexBlockManager.closeBlock();
+        mergedVocabularyBlockManager.closeBlock();
 
 
     }

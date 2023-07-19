@@ -14,11 +14,14 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
     protected BinaryFileManager binaryFileManager;
     protected String blockPath = null;
 
+    protected MODE mode;
+
 
     public BinaryBlockManager(int blockNo, String blockDirectory, MODE mode) throws IOException{
         if( ! ( new File(blockDirectory)).exists() ){
             Files.createDirectories(Paths.get(blockDirectory));
         }
+        this.mode = mode;
         this.blockNo = blockNo;
         this.blockPath = blockDirectory + this.blockNo + ".binary";
         if (mode == MODE.WRITE){
@@ -33,6 +36,7 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
             Files.createDirectories(Paths.get(blockDirectory));
         }
         this.blockPath = blockDirectory + blockName + ".binary";
+        this.mode = mode;
         if (mode == MODE.WRITE){
             this.openNewBlock();
         } else if (mode == MODE.READ){
@@ -41,6 +45,9 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
     }
 
     protected void openNewBlock() throws IOException {
+        if(this.mode != MODE.WRITE){
+            throw new IOException("Cannot open new block since BlockManager mode is not MODE.WRITE\tcurrent mode: " + this.mode);
+        }
         File f = new File(this.blockPath);
         if (f.exists()) {
             // Delete the existing folders
@@ -67,6 +74,9 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
 
 
     protected void openBlock() throws IOException {
+        if(this.mode != MODE.READ){
+            throw new IOException("Cannot open existing block in read mode since BlockManager mode is not MODE.READ\tcurrent mode: " + this.mode);
+        }
         File f = new File(this.blockPath);
         if(!f.exists()) {
             throw new IOException("file doesn't exist");
@@ -81,6 +91,14 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
         }
         this.binaryFileManager.close();
         return true;
+    }
+
+    public String getBlockPath() {
+        return blockPath;
+    }
+
+    public boolean checkDebug(String message){
+        return this.binaryFileManager.checkDebug(message);
     }
 
 }

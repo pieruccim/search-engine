@@ -36,16 +36,25 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
 
     @Override
     public ArrayList<Posting> readRow() throws Exception {
-
         return null;
     }
 
+    /**
+     * 
+     * @param offset from the beginning of the block file to read from as number of integers (of 4 bytes)
+     * @param numPostings how many posting have to be read (each posting is a pair of integers (docID, freq))
+     * @return ArrayList<Posting> the List of postings retrieved
+     * @throws Exception
+     */
     public ArrayList<Posting> readRow(int offset, int numPostings) throws Exception {
 
         ArrayList<Posting> postingList = new ArrayList<>();
 
         for(int i = 0; i < numPostings; i++) {
-            Pair<Integer, Integer> docIdFreq = readCouple(offset + i);
+            Pair<Integer, Integer> docIdFreq = readCouple(offset + i * 2);
+            if(docIdFreq == null){
+                break;
+            }
             Posting posting = new Posting(docIdFreq.getKey(), docIdFreq.getValue());
             postingList.add(posting);
         }
