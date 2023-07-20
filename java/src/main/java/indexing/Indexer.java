@@ -84,7 +84,7 @@ public class Indexer {
         //collection.tar.gz     //test-collection20000.tsv
         // C:\\Users\\nello\\Documents\\Intellij Projects\\search-engine\\test-collection20000.tsv
         // 
-        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ, "UTF-16");
+        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\collection.tar.gz", MODE.READ, "UTF-8");
 
         String line;
 
