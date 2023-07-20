@@ -5,12 +5,13 @@ import java.util.ArrayList;
 
 import common.bean.VocabularyFileRecord;
 import common.manager.file.FileManager;
+import config.ConfigLoader;
 import jdk.jshell.spi.ExecutionControl;
 
 
 public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRecord>{
 
-    protected static String blockDirectory = System.getProperty("user.dir") + "/src/main/java/data/output/vocabularyBlocks/";
+    protected static String blockDirectory = ConfigLoader.getProperty("blocks.vocabulary.path");
 
     public VocabularyBlockManager(int blockNo, FileManager.MODE mode) throws IOException {
         super(blockNo, blockDirectory, mode);

@@ -5,11 +5,12 @@ import java.io.IOException;
 
 import common.bean.DocumentIndexFileRecord;
 import common.manager.file.FileManager;
+import config.ConfigLoader;
 import jdk.jshell.spi.ExecutionControl;
 
 public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexFileRecord>{
 
-    protected static String blockDirectory = System.getProperty("user.dir") + "/src/main/java/data/output/documentIndexBlocks/";
+    protected static String blockDirectory = ConfigLoader.getProperty("blocks.documentIndex.path");
 
     public DocumentIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException {
         super(blockNo, blockDirectory, mode);

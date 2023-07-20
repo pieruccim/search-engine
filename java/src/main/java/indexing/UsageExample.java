@@ -2,6 +2,9 @@ package indexing;
 
 
 import java.sql.Timestamp;
+import config.ConfigLoader;
+import javafx.util.Pair;
+import preprocessing.Preprocessor;
 
 public class UsageExample {
 
