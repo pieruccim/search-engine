@@ -3,6 +3,7 @@ package common.manager.block;
 import common.bean.DocumentIndexFileRecord;
 import common.bean.Posting;
 import common.manager.file.FileManager;
+import config.ConfigLoader;
 import javafx.util.Pair;
 
 import java.io.IOException;
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 
 public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Posting>> {
 
-    protected static String blockDirectory = System.getProperty("user.dir") + "/src/main/java/data/output/invertedIndexBlocks/";
+    protected static String blockDirectory = ConfigLoader.getProperty("blocks.invertedIndex.path");
 
     public InvertedIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException{
         super(blockNo, blockDirectory, mode);

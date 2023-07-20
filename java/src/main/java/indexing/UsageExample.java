@@ -1,5 +1,6 @@
 package indexing;
 
+import config.ConfigLoader;
 import javafx.util.Pair;
 import preprocessing.Preprocessor;
 
@@ -10,6 +11,5 @@ public class UsageExample {
         Indexer indexer = new Indexer();
         indexer.processCorpus();
         indexer.mergeDataStructures();
-
     }
 }

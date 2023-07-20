@@ -9,6 +9,7 @@ import common.manager.block.InvertedIndexBlockManager;
 import common.manager.block.VocabularyBlockManager;
 import common.manager.file.TextualFileManager;
 import common.manager.file.FileManager.MODE;
+import config.ConfigLoader;
 import indexing.manager.IndexManager;
 import indexing.manager.IndexManager.IndexRecord;
 import javafx.util.Pair;
@@ -23,7 +24,10 @@ import java.util.HashMap;
 
 public class Indexer {
 
-    static final private int memoryOccupationThreshold = 75;
+    static final private String inputCollection = ConfigLoader.getProperty("data.collection.path");
+    static final private String charsetEncoding = ConfigLoader.getProperty("data.charset");
+
+    static final private int memoryOccupationThreshold = ConfigLoader.getIntProperty("memory.threshold");
     static private int docIdCounter = 0;
     static private int currentBlockNo = 0;
 
@@ -81,10 +85,8 @@ public class Indexer {
     }
 
     public void processCorpus(){
-        //collection.tar.gz     //test-collection20000.tsv
-        // C:\\Users\\nello\\Documents\\Intellij Projects\\search-engine\\test-collection20000.tsv
-        // 
-        TextualFileManager txt = new TextualFileManager("C:\\programmazione\\search-engine\\test-collection20000.tsv", MODE.READ, "UTF-16");
+        //collection.tar.gz
+        TextualFileManager txt = new TextualFileManager(inputCollection, MODE.READ, charsetEncoding);
 
         String line;
 
