@@ -1,4 +1,5 @@
 package preprocessing;
+import config.ConfigLoader;
 import javafx.util.Pair;
 import opennlp.tools.stemmer.PorterStemmer;
 
@@ -8,6 +9,13 @@ public class Preprocessor {
     private static boolean removeStopwords;
     private static boolean performStemming;
 
+    public static void setRemoveStopwords(boolean removeStopwords) {
+        Preprocessor.removeStopwords = removeStopwords;
+    }
+
+    public static void setPerformStemming(boolean performStemming) {
+        Preprocessor.performStemming = performStemming;
+    }
 
     /**
      * Receives a line in the form "<docno>\t<text>\n", controls if it is malformed (throws exception)
@@ -117,18 +125,27 @@ public class Preprocessor {
 
         text = convertToLowercase(text);
         text = removeBadCharacters(text);
-        text = removeStopwords(text);
+        if (removeStopwords) {
+            text = removeStopwords(text);
+        }
         text = removePunctuation(text);
 
         if (debug){
             System.out.println("Lowercase Text: " + text);
             System.out.println("Text without bad characters: " + text);
-            System.out.println("Text without Stopwords: " + text);
+            if (removeStopwords) {
+                System.out.println("Text without Stopwords: " + text);
+            }
+            else {
+                System.out.println("Text without Stopwords: " + text);
+            }
             System.out.println("Text without Punctuation: " + text);
         }
 
         String[] tokens = tokenizeText(text);
-        executeStemming(tokens);
+        if (performStemming) {
+            tokens = executeStemming(tokens);
+        }
         return tokens;
     }
 }

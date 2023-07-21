@@ -13,6 +13,9 @@ public class UsageExample {
         long beginTime = System.currentTimeMillis();
         System.out.println(new Timestamp(System.currentTimeMillis()) + "\tStarting...");
 
+        Preprocessor.setRemoveStopwords(true);
+        Preprocessor.setPerformStemming(true);
+
         Indexer indexer = new Indexer();
         indexer.processCorpus();
 
