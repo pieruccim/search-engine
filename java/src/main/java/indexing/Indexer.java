@@ -2,8 +2,11 @@ package indexing;
 
 import common.bean.DocumentIndex;
 import common.bean.DocumentIndexFileRecord;
+import common.bean.OffsetInvertedIndex;
+import common.bean.OffsetInvertedIndexFactory;
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
+import common.bean.WrittenBytes;
 import common.manager.block.DocumentIndexBlockManager;
 import common.manager.block.InvertedIndexBlockManager;
 import common.manager.block.VocabularyBlockManager;
@@ -146,7 +149,16 @@ public class Indexer {
         // the first thing to do is to sort the Index by term lexicographically
         ArrayList<String> terms = this.indexManager.getSortedKeys();
 
-        int invertedIndexOffset = 0;
+        //int invertedIndexOffset = 0;
+        OffsetInvertedIndex offsetInvertedIndex;
+        try {
+            offsetInvertedIndex = OffsetInvertedIndexFactory.createZeroOffsetObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            offsetInvertedIndex = null;
+            System.exit(-1);
+            return;
+        }
 
         // then we can iterate over the index terms one at a time 
         for (String term : terms) {
@@ -159,8 +171,10 @@ public class Indexer {
             //    System.out.println("durante la saveBlock\tmanhattan: \t" + postings.toString());
             //}
 
+            ArrayList<WrittenBytes> writtenBytes = null;
+
             try {
-                invertedIndexBlockManager.writeRow(postings);
+                writtenBytes = invertedIndexBlockManager.writeRowReturnWriteInfos(postings);
             } catch (Exception e) {
                 System.out.println("could not write row of the inverted index for the posting list of the term "+ term);
                 e.printStackTrace();
@@ -168,16 +182,17 @@ public class Indexer {
             }
 
             // once that the posting list is saved, we have the length of it on file
-            int currentPostingListLen = ( ( postings.size() ) * 2) ;    // each element is made of two integers
+            //int currentPostingListLen = ( ( postings.size() ) * 2) ;    // each element is made of two integers
 
             // we can now save an entry in the vocabulary with docid, df, cf, offset, docno
-            VocabularyFileRecord vocabularyRecord = new VocabularyFileRecord(term, record.getCf(), record.getDf(), invertedIndexOffset);
+            VocabularyFileRecord vocabularyRecord = new VocabularyFileRecord(term, record.getCf(), record.getDf(), offsetInvertedIndex);
 
             vocabularyBlockManager.writeRow(vocabularyRecord);
 
             // we can use the offset of the previous posting list + the length of the previous posting list 
             // to obtain the offset of the next posting list
-            invertedIndexOffset += currentPostingListLen;
+            //invertedIndexOffset += currentPostingListLen;
+            offsetInvertedIndex.forward(writtenBytes);
         }
         
         // in parallel with the creation of the vocabulary and of the inverted index, we can build the documentIndex
@@ -297,7 +312,17 @@ public class Indexer {
         VocabularyFileRecord[] vocabularyFileRecords = new VocabularyFileRecord[currentBlockNo];
         ArrayList<Pair<String, Integer>> termBlockList = new ArrayList<>();
 
-        int mergedPostingListOffset = 0;
+        //int mergedPostingListOffset = 0;
+        OffsetInvertedIndex offsetMergedInvertedIndex;
+        try {
+            offsetMergedInvertedIndex = OffsetInvertedIndexFactory.createZeroOffsetObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            offsetMergedInvertedIndex = null;
+            System.exit(-1);
+            return;
+        }
+
 
         for (int i = 0; i < currentBlockNo; i++) {
             try {
@@ -357,7 +382,7 @@ public class Indexer {
                 cf += vocabularyFileRecords[blockId].getCf();
                 int tmpDf = vocabularyFileRecords[blockId].getDf();
                 df += tmpDf;
-                int tmpOffset = vocabularyFileRecords[blockId].getOffset();
+                OffsetInvertedIndex tmpOffset = vocabularyFileRecords[blockId].getOffset();
                 try {
                     postingList.addAll(arrayIndexManagers[blockId].readRow(tmpOffset, tmpDf));
                 } catch (Exception e) {
@@ -380,19 +405,21 @@ public class Indexer {
                     arrayIndexManagers[blockId].closeBlock();
                 }
             }
-            VocabularyFileRecord mergedVocabularyFileRecord = new VocabularyFileRecord(termLexMin, cf, df, mergedPostingListOffset);
-            mergedPostingListOffset += postingList.size() * 2;
-
+            VocabularyFileRecord mergedVocabularyFileRecord = new VocabularyFileRecord(termLexMin, cf, df, offsetMergedInvertedIndex);
+            ArrayList<WrittenBytes> writtenBytes = null;
             try {
                 // add the posting list to the resulting inverted index
                 //if(termLexMin.equals("manhattan")){
                 //    System.out.println("durante la mergeBlock\tmanhattan: \t" + postingList.toString());
                 //}
-                mergedInvertedIndexBlockManager.writeRow(postingList);
+                writtenBytes = mergedInvertedIndexBlockManager.writeRowReturnWriteInfos(postingList);
                 mergedVocabularyBlockManager.writeRow(mergedVocabularyFileRecord);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+
+            //mergedPostingListOffset += postingList.size() * 2;
+            offsetMergedInvertedIndex.forward(writtenBytes);
 
         }
         mergedInvertedIndexBlockManager.closeBlock();
