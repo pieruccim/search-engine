@@ -1,7 +1,10 @@
 package common.manager.block;
 
 import common.bean.DocumentIndexFileRecord;
+import common.bean.OffsetInvertedIndex;
 import common.bean.Posting;
+import common.bean.WrittenBytes;
+import common.manager.block.VocabularyBlockManager.OffsetType;
 import common.manager.file.FileManager;
 import config.ConfigLoader;
 import javafx.util.Pair;
@@ -12,6 +15,8 @@ import java.util.ArrayList;
 public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Posting>> {
 
     protected static String blockDirectory = ConfigLoader.getProperty("blocks.invertedIndex.path");
+
+    protected static OffsetType offsetType = OffsetType.valueOf(ConfigLoader.getProperty("blocks.invertedindex.type"));
 
     public InvertedIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException{
         super(blockNo, blockDirectory, mode);
@@ -26,13 +31,37 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
      */
     @Override
     public void writeRow(ArrayList<Posting> r) throws Exception{
-
-        for (Posting posting : r) {
-            this.binaryFileManager.writeInt(posting.getDocid());
-            this.binaryFileManager.writeInt(posting.getFreq());
+        if(InvertedIndexBlockManager.offsetType == OffsetType.SINGLE_FILE){
+            for (Posting posting : r) {
+                this.binaryFileManager.writeInt(posting.getDocid());
+                this.binaryFileManager.writeInt(posting.getFreq());
+            }
+            // when we are here, in the binary output file we have r.length * 2 integers
+        }else{
+            throw new Exception("Unimplemented OffsetType handling for " + InvertedIndexBlockManager.offsetType);
         }
+    }
 
-        // when we are here, in the binary output file we have r.length * 2 integers
+    /**
+     * @param r<Posting> r a complete posting list for a certain term
+     * @return ArrayList<WrittenBytes> the length must be equal to 1 in case of inverted index on single file, equal to 2 in case of TWO_FILES
+     */
+    public ArrayList<WrittenBytes> writeRowReturnWriteInfos(ArrayList<Posting> r) throws Exception{
+        ArrayList<WrittenBytes> ret = new ArrayList<WrittenBytes>();
+        if(InvertedIndexBlockManager.offsetType == OffsetType.SINGLE_FILE){
+            long numBytesWritten = 0;
+            for (Posting posting : r) {
+                this.binaryFileManager.writeInt(posting.getDocid());
+                this.binaryFileManager.writeInt(posting.getFreq());
+                numBytesWritten += ( Integer.SIZE / 8) * 2;
+            }
+            // when we are here, in the binary output file we have r.length * 2 integers
+            ret.add(new WrittenBytes(numBytesWritten));
+            return ret;
+        }else{
+            // here the ArrayList must be made of two elements
+            throw new Exception("Unimplemented OffsetType handling for " + InvertedIndexBlockManager.offsetType);
+        }
     }
 
     @Override
@@ -47,12 +76,14 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
      * @return ArrayList<Posting> the List of postings retrieved
      * @throws Exception
      */
-    public ArrayList<Posting> readRow(int offset, int numPostings) throws Exception {
+    public ArrayList<Posting> readRow(OffsetInvertedIndex offset, int numPostings) throws Exception {
 
         ArrayList<Posting> postingList = new ArrayList<>();
 
+        this.seek(offset);
+
         for(int i = 0; i < numPostings; i++) {
-            Pair<Integer, Integer> docIdFreq = readCouple(offset + i * 2);
+            Pair<Integer, Integer> docIdFreq = readCouple();
             if(docIdFreq == null){
                 break;
             }
@@ -63,15 +94,32 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
         return postingList;
     }
 
-    public Pair<Integer, Integer> readCouple(int offset){
+    public void seek(OffsetInvertedIndex offsetInvertedIndex) throws Exception{
+        if(InvertedIndexBlockManager.offsetType == OffsetType.SINGLE_FILE){
+            try {
+                this.binaryFileManager.seek(offsetInvertedIndex.getBytesOffsetDocId());
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else{
+            throw new Exception("Unimplemented seek method for offset type " + InvertedIndexBlockManager.offsetType);
+        }
+    }
+
+    public Pair<Integer, Integer> readCouple() throws Exception{
         int docId = 0;
         int freq = 0;
-
-        try {
-            docId = binaryFileManager.readInt(offset);
-            freq = binaryFileManager.readInt();
-        } catch (Exception e){
-            return null;
+        if(InvertedIndexBlockManager.offsetType == OffsetType.SINGLE_FILE){
+            try {
+                docId = binaryFileManager.readInt();
+                freq = binaryFileManager.readInt();
+            } catch (Exception e){
+                return null;
+            }
+        }else{
+            throw new Exception("Unimplemented seek method for offset type " + InvertedIndexBlockManager.offsetType);
         }
 
         return new Pair<>(docId,freq);
