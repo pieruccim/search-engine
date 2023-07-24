@@ -111,6 +111,14 @@ public class BinaryFileManager extends FileManager {
             
     }
 
+    public long getCurrentPosition() throws IOException{
+        //if(this.mode != MODE.READ){
+        //    throw new Exception("Binary file manager not in MODE.READ\tCannot perform seek");
+        //}
+        //this.dataInputStream.close();
+        return this.randomAccessFileInput.getFilePointer();
+    }
+
     @Override
     public void close() {
         if (this.mode == MODE.WRITE) {

@@ -40,6 +40,9 @@ public class OffsetIISingleFile implements OffsetInvertedIndex {
         if(writtenBytes.size() != 1){
             throw new IllegalArgumentException("the length of the ArrayList writtenBytes must be equal to 1; \t" + writtenBytes.size() + " was given");
         }
+        if(writtenBytes.get(0).getNumBytes() <= 0){
+            throw new IllegalArgumentException("numbytes written is <= 0! received value: " + writtenBytes.get(0).getNumBytes());
+        }
         this.bytesOffset += writtenBytes.get(0).getNumBytes();
     }
     
