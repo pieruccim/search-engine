@@ -5,9 +5,9 @@ public class VocabularyFileRecord{
     String term;
     int cf;
     int df;
-    int offset;
+    OffsetInvertedIndex offset;
 
-    public VocabularyFileRecord(String term, int cf, int df, int offset) {
+    public VocabularyFileRecord(String term, int cf, int df, OffsetInvertedIndex offset) {
         this.term = term;
         this.cf = cf;
         this.df = df;
@@ -23,7 +23,7 @@ public class VocabularyFileRecord{
     public int getDf() {
         return df;
     }
-    public int getOffset() {
+    public OffsetInvertedIndex getOffset() {
         return offset;
     }
 }
