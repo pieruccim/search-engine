@@ -1,11 +1,21 @@
 package preprocessing;
+import config.ConfigLoader;
 import javafx.util.Pair;
 import opennlp.tools.stemmer.PorterStemmer;
 
 public class Preprocessor {
 
-    private static final String[] stopwordsList = {"a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "could", "did", "do", "does", "doing", "down", "during", "each", "few", "for", "from", "further", "had", "has", "have", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "it", "it's", "its", "itself", "let's", "me", "more", "most", "my", "myself", "nor", "of", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "she", "she'd", "she'll", "she's", "should", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "we'd", "we'll", "we're", "we've", "were", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "would", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"};
+    private static final String[] stopwordsList = ConfigLoader.getStopwordsList();
+    private static boolean removeStopwords;
+    private static boolean performStemming;
 
+    public static void setRemoveStopwords(boolean removeStopwords) {
+        Preprocessor.removeStopwords = removeStopwords;
+    }
+
+    public static void setPerformStemming(boolean performStemming) {
+        Preprocessor.performStemming = performStemming;
+    }
 
     /**
      * Receives a line in the form "<docno>\t<text>\n", controls if it is malformed (throws exception)
@@ -115,18 +125,27 @@ public class Preprocessor {
 
         text = convertToLowercase(text);
         text = removeBadCharacters(text);
-        text = removeStopwords(text);
+        if (removeStopwords) {
+            text = removeStopwords(text);
+        }
         text = removePunctuation(text);
 
         if (debug){
             System.out.println("Lowercase Text: " + text);
             System.out.println("Text without bad characters: " + text);
-            System.out.println("Text without Stopwords: " + text);
+            if (removeStopwords) {
+                System.out.println("Text without Stopwords: " + text);
+            }
+            else {
+                System.out.println("Text without Stopwords: " + text);
+            }
             System.out.println("Text without Punctuation: " + text);
         }
 
         String[] tokens = tokenizeText(text);
-        executeStemming(tokens);
+        if (performStemming) {
+            tokens = executeStemming(tokens);
+        }
         return tokens;
     }
 }

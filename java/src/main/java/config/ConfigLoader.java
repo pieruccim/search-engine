@@ -43,4 +43,9 @@ public class ConfigLoader {
             throw new RuntimeException("Error parsing int value for key '" + key + "': " + e.getMessage());
         }
     }
+
+    public static String[] getStopwordsList() {
+        String stopwords = properties.getProperty("stopwords");
+        return stopwords.split(",");
+    }
 }
