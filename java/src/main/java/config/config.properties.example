@@ -1,7 +1,7 @@
 data.collection.path=C:\\Users\\nello\\Documents\\Intellij Projects\\search-engine\\test-collection100.tsv
 data.charset=UTF-16
 memory.threshold=75
-blocks.documentIndex.path=${user.dir}/src/main/java/data/output/documentIndexBlocks/
-blocks.vocabulary.path=${user.dir}/src/main/java/data/output/vocabularyBlocks/
-blocks.invertedIndex.path=${user.dir}/src/main/java/data/output/invertedIndexBlocks/
+blocks.documentIndex.path=${user.dir}/data/output/documentIndexBlocks/
+blocks.vocabulary.path=${user.dir}/data/output/vocabularyBlocks/
+blocks.invertedIndex.path=${user.dir}/data/output/invertedIndexBlocks/
 blocks.invertedindex.type=SINGLE_FILE

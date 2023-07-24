@@ -1,3 +1,4 @@
 .idea/
 java/data/*
+data/*
 src/main/java/config/config.properties
