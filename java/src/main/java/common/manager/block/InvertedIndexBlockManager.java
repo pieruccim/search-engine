@@ -82,12 +82,6 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
 
         this.seek(offset);
 
-        //DEBUG: to be removed
-        if(this.binaryFileManager.getCurrentPosition() != offset.getBytesOffsetDocId()){
-            throw new Exception("this.binaryFileManager.getCurrentPosition() != offset.getBytesOffsetDocId()");
-        }
-        //DEBUG: end
-
         for(int i = 0; i < numPostings; i++) {
             Pair<Integer, Integer> docIdFreq = readCouple();
             if(docIdFreq == null){
@@ -97,13 +91,6 @@ public class InvertedIndexBlockManager extends BinaryBlockManager<ArrayList<Post
             Posting posting = new Posting(docIdFreq.getKey(), docIdFreq.getValue());
             postingList.add(posting);
         }
-
-        //DEBUG: to be removed
-        if(this.binaryFileManager.getCurrentPosition() != offset.getBytesOffsetDocId() + numPostings * 8 ){
-            throw new Exception("this.binaryFileManager.getCurrentPosition() != offset.getBytesOffsetDocId()  + numPostings * 8" +
-                "\tcurrPos: " + this.binaryFileManager.getCurrentPosition() + "\t expected: " + offset.getBytesOffsetDocId() + numPostings * 8);
-        }
-        //DEBUG: end
 
         return postingList;
     }

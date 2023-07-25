@@ -167,13 +167,14 @@ public class Indexer {
             // store the posting list of that term in the inverted index
             ArrayList<Posting> postings = record.getPostingList();
 
-            if(term.equals("manhattan") || term.equals("tourism")  || term.equals("tourist")){
-                System.out.println("durante la saveBlock\t" + term + ": \t" + postings.toString());
-            }
+            //if(term.equals("manhattan") || term.equals("tourism")  || term.equals("tourist")){
+            //    System.out.println("durante la saveBlock\t" + term + ": \t" + postings.toString());
+            //}
 
             ArrayList<WrittenBytes> writtenBytes = null;
 
             try {
+                // once that the posting list is saved, we have the length of it on file
                 writtenBytes = invertedIndexBlockManager.writeRowReturnWriteInfos(postings);
             } catch (Exception e) {
                 System.out.println("could not write row of the inverted index for the posting list of the term "+ term);
@@ -181,13 +182,6 @@ public class Indexer {
                 System.exit(-1);
             }
 
-            // once that the posting list is saved, we have the length of it on file
-            //int currentPostingListLen = ( ( postings.size() ) * 2) ;    // each element is made of two integers
-            if(writtenBytes.get(0).getNumBytes() != ( postings.size() ) * 2 * 4){
-                System.out.println("during saveBlock\term:" + term + "\twrittenBytes: \t" + writtenBytes.get(0).getNumBytes()
-                        + " expected amount: " +  ( ( postings.size() ) * 2) * 4);
-                System.exit(-1);
-            }
             // we can now save an entry in the vocabulary with docid, df, cf, offset, docno
             VocabularyFileRecord vocabularyRecord = new VocabularyFileRecord(term, record.getCf(), record.getDf(), offsetInvertedIndex);
 
@@ -195,12 +189,10 @@ public class Indexer {
 
             // we can use the offset of the previous posting list + the length of the previous posting list 
             // to obtain the offset of the next posting list
-            //invertedIndexOffset += currentPostingListLen;
             offsetInvertedIndex.forward(writtenBytes);
         }
         
         // in parallel with the creation of the vocabulary and of the inverted index, we can build the documentIndex
-        // TODO: parallelize maybe
         ArrayList<DocumentIndexFileRecord> documentIndexList = this.documentIndex.getSortedList();
         try {
             for (DocumentIndexFileRecord documentIndexFileRecord : documentIndexList) {
@@ -224,10 +216,7 @@ public class Indexer {
         vocabularyBlockManager.closeBlock();
         documentIndexBlockManager.closeBlock();
 
-        // reset data structures
-        //this.resetDataStructures();
-        System.out.println("The block is made of " + terms.size() + " terms and " + documentIndexList.size() + " documents");
-        System.out.println("Done");
+        System.out.println("Done! The block is made of " + terms.size() + " terms and " + documentIndexList.size() + " documents");
 
     }
 
@@ -242,7 +231,6 @@ public class Indexer {
     public void mergeDataStructures(){
         mergeDocumentIndex();
         mergeInvertedIndex();
-        // TODO: implement merging functions for Inverted Index and Vocabulary
     }
 
     private void mergeDocumentIndex(){
@@ -316,7 +304,6 @@ public class Indexer {
         VocabularyFileRecord[] vocabularyFileRecords = new VocabularyFileRecord[currentBlockNo];
         ArrayList<Pair<String, Integer>> termBlockList = new ArrayList<>();
 
-        int mergedPostingListOffset = 0;
         OffsetInvertedIndex offsetMergedInvertedIndex;
         try {
             offsetMergedInvertedIndex = OffsetInvertedIndexFactory.createZeroOffsetObject();
@@ -414,22 +401,16 @@ public class Indexer {
             ArrayList<WrittenBytes> writtenBytes = null;
             try {
                 // add the posting list to the resulting inverted index
-                if(termLexMin.equals("manhattan") || termLexMin.equals("tourism") || termLexMin.equals("tourist")){
-                    System.out.println("durante la mergeBlock\t" + termLexMin + ": \t" + postingList.toString());
-                }
+                //if(termLexMin.equals("manhattan") || termLexMin.equals("tourism") || termLexMin.equals("tourist")){
+                //    System.out.println("durante la mergeBlock\t" + termLexMin + ": \t" + postingList.toString());
+                //}
                 writtenBytes = mergedInvertedIndexBlockManager.writeRowReturnWriteInfos(postingList);
                 mergedVocabularyBlockManager.writeRow(mergedVocabularyFileRecord);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
-            mergedPostingListOffset += postingList.size() * 2;
             offsetMergedInvertedIndex.forward(writtenBytes);
-
-            if(offsetMergedInvertedIndex.getBytesOffsetDocId() != mergedPostingListOffset * 4){
-                System.out.println("error while calculating the offset at the term " + termLexMin);
-                System.exit(-1);
-            }
 
         }
         mergedInvertedIndexBlockManager.closeBlock();

@@ -4,7 +4,6 @@ import java.io.*;
 
 public class BinaryFileManager extends FileManager {
 
-    protected DataInputStream dataInputStream;
     protected DataOutputStream dataOutputStream;
 
     protected RandomAccessFile randomAccessFileInput;
@@ -30,7 +29,6 @@ public class BinaryFileManager extends FileManager {
         } else if (mode == MODE.READ) {
             try {
                 this.randomAccessFileInput = new RandomAccessFile(filePath, "r");
-                this.dataInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(randomAccessFileInput.getFD())));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -47,7 +45,7 @@ public class BinaryFileManager extends FileManager {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform readInt");
         }
         try {
-            return this.dataInputStream.readInt();
+            return this.randomAccessFileInput.readInt();
         }catch(EOFException e){
             throw e; // in case of EOFException, it is thrown directly
         }catch (IOException e) {
@@ -70,8 +68,7 @@ public class BinaryFileManager extends FileManager {
 
         try {
             this.seek(offset);
-
-            int value = dataInputStream.readInt(); // Read the integer
+            int value = randomAccessFileInput.readInt();
 
             return value;
         } catch (EOFException e) {
@@ -104,10 +101,7 @@ public class BinaryFileManager extends FileManager {
         if(this.mode != MODE.READ){
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform seek");
         }
-        //this.dataInputStream.close();
         this.randomAccessFileInput.seek(byteOffset);
-        //long test = this.randomAccessFileInput.getFilePointer();
-        //this.dataInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(randomAccessFileInput.getFD())));
             
     }
 
@@ -115,7 +109,6 @@ public class BinaryFileManager extends FileManager {
         //if(this.mode != MODE.READ){
         //    throw new Exception("Binary file manager not in MODE.READ\tCannot perform seek");
         //}
-        //this.dataInputStream.close();
         return this.randomAccessFileInput.getFilePointer();
     }
 
@@ -129,7 +122,6 @@ public class BinaryFileManager extends FileManager {
             }
         } else if (this.mode == MODE.READ) {
             try {
-                this.dataInputStream.close();
                 this.randomAccessFileInput.close();
             } catch (IOException e) {
                 e.printStackTrace();
