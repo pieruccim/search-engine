@@ -12,7 +12,7 @@ public class DAAT {
 
     TreeSet<DocumentScore> priorityQueue = new TreeSet<>(Comparator.comparingDouble(DocumentScore::getScore).reversed());
 
-    private static class DocumentScore {
+    public static class DocumentScore {
         private int docId;
         private double score;
 
