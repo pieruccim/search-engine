@@ -1,22 +1,21 @@
 package common.manager.block;
 
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
 
-import common.bean.OffsetIISingleFile;
-import common.bean.OffsetIITwoFiles;
 import common.bean.OffsetInvertedIndex;
 import common.bean.OffsetInvertedIndexFactory;
 import common.bean.VocabularyFileRecord;
 import common.manager.file.FileManager;
+import common.manager.file.FileManager.MODE;
 import config.ConfigLoader;
-import jdk.jshell.spi.ExecutionControl;
+
 
 
 public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRecord>{
 
     protected static String blockDirectory = ConfigLoader.getProperty("blocks.vocabulary.path");
+
+    protected static String mergedBlockFilePath = ConfigLoader.getProperty("blocks.merged.vocabulary.path");
 
     public enum OffsetType{
         SINGLE_FILE,
@@ -56,6 +55,14 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
         OffsetInvertedIndex offsetInvertedIndex = OffsetInvertedIndexFactory.parseObjectFromString(arrayString[3]);
 
         return new VocabularyFileRecord(arrayString[0], Integer.parseInt(arrayString[1]), Integer.parseInt(arrayString[2]), offsetInvertedIndex);
+    }
+
+    public static VocabularyBlockManager getMergedFileManager(MODE mode) throws IOException{
+        return new VocabularyBlockManager(mergedBlockFilePath.replace(".txt", ""), mode);
+    }
+
+    public static VocabularyBlockManager getMergedFileManager() throws IOException{
+        return getMergedFileManager(MODE.READ);
     }
 
 }
