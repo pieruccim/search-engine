@@ -5,3 +5,6 @@ blocks.documentIndex.path=${user.dir}/data/output/documentIndexBlocks/
 blocks.vocabulary.path=${user.dir}/data/output/vocabularyBlocks/
 blocks.invertedIndex.path=${user.dir}/data/output/invertedIndexBlocks/
 blocks.invertedindex.type=SINGLE_FILE
+blocks.merged.documentIndex.path=${blocks.documentIndex.path}/merged-document-index.binary
+blocks.merged.vocabulary.path=${blocks.documentIndex.path}/merged-vocabulary.txt
+blocks.merged.invertedIndex.path=${blocks.documentIndex.path}/merged-inverted-index.binary
