@@ -61,7 +61,7 @@ public class DAAT {
                 PostingListIterator iterator = iterators.get(term.getTerm());
                 if (iterator.hasNext()) {
                     allListsProcessed = false;
-                    int docId = iterator.getCurrentPosting().getDocid();
+                    int docId = iterator.next().getDocid();//iterator.getCurrentPosting().getDocid();
                     minDocId = Math.min(minDocId, docId);
                 }
             }
@@ -84,7 +84,9 @@ public class DAAT {
             // move forward the PostingListIterators to the next document ID for terms that match the minDocId
             for (VocabularyFileRecord term : queryTerms) {
                 PostingListIterator iterator = iterators.get(term.getTerm());
-                iterator.nextGEQ(minDocId);
+                if(iterator.hasNext()){
+                    iterator.nextGEQ(minDocId);
+                }
             }
         }
 

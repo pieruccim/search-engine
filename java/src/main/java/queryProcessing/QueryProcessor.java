@@ -68,6 +68,7 @@ public class QueryProcessor {
             e.printStackTrace();
         }
         VocabularyFileRecord vocabularyFileRecord = null;
+        this.vocabulary = new HashMap<String, VocabularyFileRecord>();
         try {
             while(( vocabularyFileRecord = vocabularyBlockManager.readRow()) != null){
                 vocabulary.put(vocabularyFileRecord.getTerm(), vocabularyFileRecord);

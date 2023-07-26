@@ -30,6 +30,7 @@ public class BinaryFileManager extends FileManager {
             try {
                 this.randomAccessFileInput = new RandomAccessFile(filePath, "r");
             } catch (IOException e) {
+                System.out.println("Received filePath: " + filePath);
                 e.printStackTrace();
             }
         }

@@ -47,7 +47,7 @@ public abstract class TextualBlockManager<T> implements BlockManager<T> {
     protected void openBlock() throws IOException {
         File f = new File(this.blockPath);
         if(!f.exists()) {
-            throw new IOException("file doesn't exist");
+            throw new IOException("file '" + this.blockPath + "' doesn't exist");
         }
         this.textualFileManager = new TextualFileManager(this.blockPath, MODE.READ, "UTF-8");
     };

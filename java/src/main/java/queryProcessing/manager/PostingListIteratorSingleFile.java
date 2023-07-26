@@ -18,7 +18,7 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
 
     protected Posting currentPosting;
 
-    protected static String postingListPath = ConfigLoader.getProperty("blocks.merged.invertedIndex.path");
+    protected static String postingListPath = ConfigLoader.getProperty("blocks.invertedIndex.path") + ConfigLoader.getProperty("blocks.merged.invertedIndex.path");
     protected BinaryFileManager binaryFileManager;
 
     @Override
@@ -139,8 +139,9 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
 
         Posting currPosting = this.getCurrentPosting();
 
-        if(currPosting.getDocid() >= docId){
-            return currPosting;
+        if(currPosting!= null && currPosting.getDocid() >= docId){
+            //return currPosting;
+            return this.next();
         }
 
         Posting lastPosting = this.readAt(this.howManyRecords - 1);
