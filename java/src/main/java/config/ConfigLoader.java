@@ -44,6 +44,10 @@ public class ConfigLoader {
         }
     }
 
+    public static Boolean getPropertyBool(String key){
+        return Boolean.parseBoolean(properties.getProperty(key));
+    }
+
     public static String[] getStopwordsList() {
         String stopwords = properties.getProperty("stopwords");
         return stopwords.split(",");

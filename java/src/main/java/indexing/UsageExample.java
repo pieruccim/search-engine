@@ -13,8 +13,8 @@ public class UsageExample {
         long beginTime = System.currentTimeMillis();
         System.out.println(new Timestamp(System.currentTimeMillis()) + "\tStarting...");
 
-        Preprocessor.setRemoveStopwords(true);
-        Preprocessor.setPerformStemming(true);
+        Preprocessor.setRemoveStopwords(ConfigLoader.getPropertyBool("preprocessing.remove.stopwords"));
+        Preprocessor.setPerformStemming(ConfigLoader.getPropertyBool("preprocessing.enable.stemming"));
 
         Indexer indexer = new Indexer();
         indexer.processCorpus();
