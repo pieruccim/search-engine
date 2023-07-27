@@ -36,6 +36,20 @@ public class Indexer {
     private DocumentIndex documentIndex;
     private IndexManager indexManager;
 
+    public class TermBlockListComparator implements Comparator<Pair<String, Integer>> {
+        @Override
+        public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
+            int keyComparison = o1.getKey().compareTo(o2.getKey());
+            if (keyComparison == 0) {
+                // if keys are equal, so compare based on Integer values
+                return Integer.compare(o1.getValue(), o2.getValue());
+            } else {
+                // if keys are different, use the result of the key comparison
+                return keyComparison;
+            }
+        }
+    }
+
     public Indexer(){
         this.documentIndex = new DocumentIndex();
         this.indexManager = new IndexManager();
@@ -325,31 +339,8 @@ public class Indexer {
         }
 
         while (!termBlockList.isEmpty()) {
-            termBlockList.sort(new Comparator<Pair<String, Integer>>() {
-                @Override
-                public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
-
-                    int val = o1.getKey().compareTo(o2.getKey());
-
-                    switch (val) {
-                        case 0:
-                            if (o1.getValue() > o2.getValue()) {
-                                return 1;
-                            } else if (o1.getValue() < o2.getValue()) {
-                                return -1;
-                            } else {
-                                System.out.println("Found two identical pairs: " + o1.getKey() + "-" + o1.getValue());
-                                return 0;
-                            }
-
-                        default:
-                            return val;
-
-                    }
-
-                }
-            });
-
+            // Use Comparator.comparing() and thenComparing() for sorting termBlockList
+            termBlockList.sort(new TermBlockListComparator());
 
             // block of the min lexicographic term between all first terms of each block
             String termLexMin = termBlockList.get(0).getKey();
