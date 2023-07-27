@@ -21,7 +21,6 @@ import preprocessing.Preprocessor;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
@@ -250,14 +249,9 @@ public class Indexer {
 
             try {
                 documentIndexBlockManagerReader = new DocumentIndexBlockManager(i, MODE.READ);
-                documentIndexBlockManagerReader.checkDebug("inside try block of the constructor");
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            documentIndexBlockManagerReader.checkDebug("before calling merge document index");
-            howMany = mergeDocumentIndexBlock(documentIndexBlockManagerReader, documentIndexBlockManagerWriter);
-            //System.out.println("Merged " + howMany + " read records from the block " + documentIndexBlockManagerReader.getBlockPath());
-            documentIndexBlockManagerReader.checkDebug("after method mergeDocumentIndexBlock");
             documentIndexBlockManagerReader.closeBlock();
         }
         // Close file manager

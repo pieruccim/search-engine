@@ -96,9 +96,4 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
     public String getBlockPath() {
         return blockPath;
     }
-
-    public boolean checkDebug(String message){
-        return this.binaryFileManager.checkDebug(message);
-    }
-
 }

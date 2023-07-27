@@ -129,13 +129,4 @@ public class BinaryFileManager extends FileManager {
             }
         }
     }
-
-    public boolean checkDebug(String message){
-        if(this.randomAccessFileInput == null){
-                System.out.println(message+":\trandomAccessFileInput == null");
-                return false;
-        }
-        return true;
-
-    }
 }
