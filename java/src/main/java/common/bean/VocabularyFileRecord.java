@@ -26,4 +26,9 @@ public class VocabularyFileRecord{
     public OffsetInvertedIndex getOffset() {
         return offset;
     }
+
+    @Override
+    public String toString() {
+        return "VocabularyFileRecord [term=" + term + ", cf=" + cf + ", df=" + df + ", offset=" + offset + "]";
+    }
 }

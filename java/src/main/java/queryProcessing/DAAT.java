@@ -10,9 +10,7 @@ import java.util.*;
 
 public class DAAT {
 
-    TreeSet<DocumentScore> priorityQueue = new TreeSet<>(Comparator.comparingDouble(DocumentScore::getScore).reversed());
-
-    public static class DocumentScore {
+    public static class DocumentScore  {
         private int docId;
         private double score;
 
@@ -28,6 +26,29 @@ public class DAAT {
         public double getScore() {
             return score;
         }
+
+        @Override
+        public String toString() {
+            return "DocumentScore [docId=" + docId + ", score=" + score + "]";
+        }
+
+        public static int compare(DocumentScore o1, DocumentScore o2) {
+            if(o1.getScore() > o2.getScore()){
+                return 1;
+            }else if(o1.getScore() < o2.getScore()){
+                return -1;
+            }else{
+                if(o1.getDocId() > o2.getDocId()){
+                    return -1;
+                }else if(o1.getDocId() < o2.getDocId()){
+                    return 1;
+                }else{
+                    return 0;
+                }
+            }
+        }
+
+
     }
 
 
@@ -40,6 +61,8 @@ public class DAAT {
      * @return the k most fitting docs w.r.t. the submitted query
      */
     public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, int k) {
+
+        TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
 
         // create a map to store PostingListIterators for each query term
         Map<String, PostingListIterator> iterators = new HashMap<>();
@@ -75,19 +98,23 @@ public class DAAT {
             double score = computeDocumentScore(queryTerms, iterators, minDocId, scoringFunction);
 
             // update the min heap with the current document score
-            priorityQueue.add(new DocumentScore(minDocId, score));
+            DocumentScore tmp = new DocumentScore(minDocId, score);
+            priorityQueue.add(tmp);
+            //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
             if (priorityQueue.size() > k) {
                 //removes from bottom
-                priorityQueue.pollLast();
+                tmp = priorityQueue.pollLast();
+                //System.out.println("Removed the documentscore: " + tmp.toString());
             }
 
             // move forward the PostingListIterators to the next document ID for terms that match the minDocId
-            for (VocabularyFileRecord term : queryTerms) {
-                PostingListIterator iterator = iterators.get(term.getTerm());
-                if(iterator.hasNext()){
-                    iterator.nextGEQ(minDocId);
-                }
-            }
+            //TODO: conjunctive queries 
+            //for (VocabularyFileRecord term : queryTerms) {
+            //    PostingListIterator iterator = iterators.get(term.getTerm());
+            //    if(iterator.hasNext()){
+            //        iterator.nextGEQ(minDocId);
+            //    }
+            //}
         }
 
         // collect the k highest scoring documents from the priority queue
