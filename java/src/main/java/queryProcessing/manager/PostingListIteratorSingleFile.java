@@ -14,7 +14,7 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
     
     protected long startingOffset;
     protected int howManyRecords;
-    protected int currentRecordIndex;
+    protected int nextRecordIndex;
 
     protected Posting currentPosting;
 
@@ -43,12 +43,12 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
         } catch (Exception e) {
             e.printStackTrace();
         }
-        this.currentRecordIndex = 0;
+        this.nextRecordIndex = 0;
         this.currentPosting = null;
     }
     @Override
     public boolean hasNext(){
-        return this.currentRecordIndex + 1 < this.howManyRecords;
+        return this.nextRecordIndex < this.howManyRecords;
     }
     @Override
     public Posting getCurrentPosting(){
@@ -70,7 +70,7 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
             e.printStackTrace();
             return null;
         }
-        this.currentRecordIndex += 1;
+        this.nextRecordIndex += 1;
         return this.currentPosting = new Posting(docId, freq);
     }
 
@@ -118,7 +118,7 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
         long offsetOfPosting = this.startingOffset + index * POSTING_SIZE;
         try {
             this.binaryFileManager.seek(offsetOfPosting);
-            this.currentRecordIndex = index;
+            this.nextRecordIndex = index;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -153,7 +153,7 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
         }
         //case in which the lastPosting docId is > than the requested docId
         //we can perform binary search to retrieve the first Posting GEQ
-        int lowerBound = this.currentRecordIndex;
+        int lowerBound = this.nextRecordIndex;
         int upperBound = this.howManyRecords - 1;
 
         int middle = lowerBound + ((upperBound - lowerBound) / 2);
