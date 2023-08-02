@@ -1,0 +1,52 @@
+package common.manager.block;
+
+import java.io.IOException;
+
+import common.bean.OffsetInvertedIndex;
+import common.bean.SkipBlock;
+import common.manager.block.VocabularyBlockManager.OffsetType;
+
+public class SkipBlockBlockManager extends BinaryBlockManager<SkipBlock>{
+
+    @Override
+    public void writeRow(SkipBlock r) throws Exception {
+        this.binaryFileManager.writeLong(r.getDocIdFileOffset());
+        this.binaryFileManager.writeLong(r.getFreqFileOffset());
+        this.binaryFileManager.writeInt(r.getMaxDocId());
+        this.binaryFileManager.writeInt(r.getHowManyPostings());
+    }
+
+    @Override
+    public SkipBlock readRow() throws Exception {
+        long docIdOffset = this.binaryFileManager.readLong();
+        long freqOffset  = this.binaryFileManager.readLong();
+        int maxDocId     = this.binaryFileManager.readInt();
+        int howMany      = this.binaryFileManager.readInt();
+        return new SkipBlock(docIdOffset, freqOffset, maxDocId, howMany);
+    }
+
+    /**
+     * reads a SkipBlock at the given offset (in bytes), the FP position is changed
+     * @param offset
+     * @return
+     * @throws Exception
+     */
+    public SkipBlock readRowAt(long offset) throws Exception {
+        //long prev = this.binaryFileManager.getCurrentPosition();
+        this.seek(offset);
+        SkipBlock sb = this.readRow();
+        //this.seek(prev);
+        return sb;
+    }
+
+    public void seek(long offset) throws Exception{
+        try {
+            this.binaryFileManager.seek(offset);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+}

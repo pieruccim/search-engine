@@ -8,3 +8,6 @@ blocks.invertedindex.type=SINGLE_FILE
 blocks.merged.documentIndex.path=${blocks.documentIndex.path}/merged-document-index.binary
 blocks.merged.vocabulary.path=${blocks.documentIndex.path}/merged-vocabulary.txt
 blocks.merged.invertedIndex.path=${blocks.documentIndex.path}/merged-inverted-index.binary
+blocks.invertedindex.docIdFilePath=/data/output/invertedIndexBlocks/docIds/
+blocks.invertedindex.freqFilePath=/data/output/invertedIndexBlocks/docIds/
+skipblocks.maxLen=500
