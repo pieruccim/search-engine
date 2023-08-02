@@ -6,7 +6,7 @@ import config.ConfigLoader;
 import javafx.util.Pair;
 import preprocessing.Preprocessor;
 
-public class UsageExample {
+public class IndexerMain {
 
     public static void main(String[] args) {
 

@@ -4,7 +4,7 @@ import javafx.util.Pair;
 
 import java.util.Arrays;
 
-public class UsageExample {
+public class PreprocessingMain {
     public static void main(String[] args) {
         String line = "1\tThe Manhattan Project and its atomic bomb helped bring an end to World War II. Its legacy of peaceful uses of atomic energy continues to have an impact on history and science.\n";
 
