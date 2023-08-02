@@ -51,6 +51,28 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         }
     }
 
+    public SplittedInvertedIndexBlockManager(String blockName, MODE mode) throws IOException {
+        this.mode = mode;
+        this.binaryFileManager = null;  //we do not use this binaryFileManager for code clearness
+
+        if( ! ( new File(SplittedInvertedIndexBlockManager.docIdsBlockFolder)).exists() ){
+            Files.createDirectories(Paths.get(SplittedInvertedIndexBlockManager.docIdsBlockFolder));
+        }
+
+        if( ! ( new File(SplittedInvertedIndexBlockManager.freqBlockFolder)).exists() ){
+            Files.createDirectories(Paths.get(SplittedInvertedIndexBlockManager.freqBlockFolder));
+        }
+
+        this.docIdsBlockPath = SplittedInvertedIndexBlockManager.docIdsBlockFolder + blockName + ".binary";
+        this.freqsBlockPath = SplittedInvertedIndexBlockManager.freqBlockFolder + blockName + ".binary";
+
+        if (mode == MODE.WRITE){
+            this.openNewBlock();
+        } else if (mode == MODE.READ){
+            this.openBlock();
+        }
+    }
+
     protected void openNewBlock() throws IOException {
         if(this.mode != MODE.WRITE){
             throw new IOException("Cannot open new block since BlockManager mode is not MODE.WRITE\tcurrent mode: " + this.mode);
