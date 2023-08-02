@@ -34,7 +34,7 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
 
     @Override
     public void writeRow(VocabularyFileRecord r) {
-        this.textualFileManager.writeLine(r.getTerm() + " " + r.getCf() + " " + r.getDf() + " " + (r.getOffset()).getStringFileRecord());
+        this.textualFileManager.writeLine(r.getTerm() + " " + r.getCf() + " " + r.getDf() + " " + r.getOffset() + " " + r.getHowManySkipBlocks());
     }
 
     /**
@@ -50,11 +50,9 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
         }
         String[] arrayString = line.split(" ");
 
-        // TODO: assert arrayString.length() == 4
+        // TODO: assert arrayString.length() == 5
         
-        OffsetInvertedIndex offsetInvertedIndex = OffsetInvertedIndexFactory.parseObjectFromString(arrayString[3]);
-
-        return new VocabularyFileRecord(arrayString[0], Integer.parseInt(arrayString[1]), Integer.parseInt(arrayString[2]), offsetInvertedIndex);
+        return new VocabularyFileRecord(arrayString[0], Integer.parseInt(arrayString[1]), Integer.parseInt(arrayString[2]), Integer.parseInt(arrayString[3]), Integer.parseInt(arrayString[4]));
     }
 
     public static VocabularyBlockManager getMergedFileManager(MODE mode) throws IOException{
