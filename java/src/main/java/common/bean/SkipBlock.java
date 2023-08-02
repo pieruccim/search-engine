@@ -6,13 +6,18 @@ public class SkipBlock {
     protected int maxDocId;
     protected int howManyPostings;
 
-    public static final int SKIP_BLOCK_ENTRY_SIZE = 2 * 4 + 2 * 8;
+    protected int docIdByteSize;
+    protected int freqByteSize;
 
-    public SkipBlock(long docIdFileOffset, long freqFileOffset, int maxDocId, int howManyPostings) {
+    public static final int SKIP_BLOCK_ENTRY_SIZE = 4 * 4 + 2 * 8;
+
+    public SkipBlock(long docIdFileOffset, long freqFileOffset, int maxDocId, int howManyPostings, int docIdByteSize, int freqByteSize) {
         this.docIdFileOffset = docIdFileOffset;
         this.freqFileOffset = freqFileOffset;
         this.maxDocId = maxDocId;
         this.howManyPostings = howManyPostings;
+        this.docIdByteSize = docIdByteSize;
+        this.freqByteSize = freqByteSize;
     }
 
     public long getDocIdFileOffset() {
@@ -33,5 +38,13 @@ public class SkipBlock {
 
     public static int getSkipBlockEntrySize() {
         return SKIP_BLOCK_ENTRY_SIZE;
+    }
+
+    public int getDocIdByteSize() {
+        return docIdByteSize;
+    }
+
+    public int getFreqByteSize() {
+        return freqByteSize;
     }
 }

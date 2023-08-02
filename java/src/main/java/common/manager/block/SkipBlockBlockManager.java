@@ -14,6 +14,8 @@ public class SkipBlockBlockManager extends BinaryBlockManager<SkipBlock>{
         this.binaryFileManager.writeLong(r.getFreqFileOffset());
         this.binaryFileManager.writeInt(r.getMaxDocId());
         this.binaryFileManager.writeInt(r.getHowManyPostings());
+        this.binaryFileManager.writeInt(r.getDocIdByteSize());
+        this.binaryFileManager.writeInt(r.getFreqByteSize());
     }
 
     @Override
@@ -22,7 +24,9 @@ public class SkipBlockBlockManager extends BinaryBlockManager<SkipBlock>{
         long freqOffset  = this.binaryFileManager.readLong();
         int maxDocId     = this.binaryFileManager.readInt();
         int howMany      = this.binaryFileManager.readInt();
-        return new SkipBlock(docIdOffset, freqOffset, maxDocId, howMany);
+        int docIdByteSize= this.binaryFileManager.readInt();
+        int freqByteSize = this.binaryFileManager.readInt();
+        return new SkipBlock(docIdOffset, freqOffset, maxDocId, howMany, docIdByteSize, freqByteSize);
     }
 
     /**

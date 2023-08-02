@@ -142,7 +142,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
                 int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, counter));
                 int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, counter));
 
-                SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex);
+                SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
                 ret.add(sb);
                 
                 startingIndex += SplittedInvertedIndexBlockManager.skipBlockMaxLength;
@@ -154,7 +154,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, counter));
         int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, counter));
 
-        SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex);
+        SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
         ret.add(sb);
         
         //startingIndex += SplittedInvertedIndexBlockManager.skipBlockMaxLength;
@@ -169,7 +169,11 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'readRow'");
     }
-
+    /**
+     * returns the PostingList of a specified skipBlock
+     * @param sb
+     * @return
+     */
     public ArrayList<Posting> readRow(SkipBlock sb){
         try {
             this.docIdBinaryFileManager.seek(sb.getDocIdFileOffset());
@@ -177,8 +181,8 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         } catch (Exception e) {
             e.printStackTrace();
         }
-        int[] docIds = this.docIdBinaryFileManager.readIntArray(sb.getHowManyPostings());
-        int[] freqs = this.freqBinaryFileManager.readIntArray(sb.getHowManyPostings());
+        int[] docIds = this.docIdBinaryFileManager.readIntArray(sb.getDocIdByteSize());
+        int[] freqs = this.freqBinaryFileManager.readIntArray(sb.getFreqByteSize());
 
         ArrayList<Posting> ret = new ArrayList<Posting>();
 
