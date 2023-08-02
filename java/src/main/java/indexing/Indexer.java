@@ -5,10 +5,13 @@ import common.bean.DocumentIndexFileRecord;
 import common.bean.OffsetInvertedIndex;
 import common.bean.OffsetInvertedIndexFactory;
 import common.bean.Posting;
+import common.bean.SkipBlock;
 import common.bean.VocabularyFileRecord;
 import common.bean.WrittenBytes;
 import common.manager.block.DocumentIndexBlockManager;
 import common.manager.block.InvertedIndexBlockManager;
+import common.manager.block.SkipBlockBlockManager;
+import common.manager.block.SplittedInvertedIndexBlockManager;
 import common.manager.block.VocabularyBlockManager;
 import common.manager.file.TextualFileManager;
 import common.manager.file.FileManager.MODE;
@@ -144,13 +147,17 @@ public class Indexer {
         System.out.println("Saving block...");
 
         // here we need the block number for the current block to load the block managers
-        InvertedIndexBlockManager invertedIndexBlockManager = null;
+        // TODO: SplittedInvertedIndex
+        SplittedInvertedIndexBlockManager invertedIndexBlockManager = null;
         VocabularyBlockManager vocabularyBlockManager = null;
         DocumentIndexBlockManager documentIndexBlockManager = null;
+        SkipBlockBlockManager skipBlockBlockManager = null;
         try {
-            invertedIndexBlockManager = new InvertedIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
+            // TODO: SplittedInvertedIndex
+            invertedIndexBlockManager = new SplittedInvertedIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
             vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo, MODE.WRITE);
             documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
+            skipBlockBlockManager = new SkipBlockBlockManager(Indexer.currentBlockNo, MODE.WRITE);
         } catch (Exception e) {
             e.printStackTrace();
             // here we must stop the execution
@@ -162,16 +169,7 @@ public class Indexer {
         // the first thing to do is to sort the Index by term lexicographically
         ArrayList<String> terms = this.indexManager.getSortedKeys();
 
-        //int invertedIndexOffset = 0;
-        OffsetInvertedIndex offsetInvertedIndex;
-        try {
-            offsetInvertedIndex = OffsetInvertedIndexFactory.createZeroOffsetObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-            offsetInvertedIndex = null;
-            System.exit(-1);
-            return;
-        }
+        int skipBlockOffset = 0;
 
         // then we can iterate over the index terms one at a time 
         for (String term : terms) {
@@ -184,26 +182,38 @@ public class Indexer {
             //    System.out.println("durante la saveBlock\t" + term + ": \t" + postings.toString());
             //}
 
-            ArrayList<WrittenBytes> writtenBytes = null;
+            ArrayList<SkipBlock> skipBlocks = null;
 
             try {
                 // once that the posting list is saved, we have the length of it on file
-                writtenBytes = invertedIndexBlockManager.writeRowReturnWriteInfos(postings);
+                skipBlocks = invertedIndexBlockManager.writeRowReturnSkipBlockInfos(postings);
             } catch (Exception e) {
                 System.out.println("could not write row of the inverted index for the posting list of the term "+ term);
                 e.printStackTrace();
                 System.exit(-1);
             }
-
+            try {
+                for (SkipBlock sb : skipBlocks) {
+                    
+                        skipBlockBlockManager.writeRow(sb);
+                    
+                }
+            } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            
             // we can now save an entry in the vocabulary with docid, df, cf, offset, docno
-            VocabularyFileRecord vocabularyRecord = new VocabularyFileRecord(term, record.getCf(), record.getDf(), offsetInvertedIndex);
+            VocabularyFileRecord vocabularyRecord = new VocabularyFileRecord(term, record.getCf(), record.getDf(), skipBlockOffset, skipBlocks.size());
 
             vocabularyBlockManager.writeRow(vocabularyRecord);
 
-            // we can use the offset of the previous posting list + the length of the previous posting list 
-            // to obtain the offset of the next posting list
-            offsetInvertedIndex.forward(writtenBytes);
+
+            // skipBlocks.size() is the number of skip blocks of which the posting list of the current term is made
+            skipBlockOffset += SkipBlock.SKIP_BLOCK_ENTRY_SIZE * skipBlocks.size();
         }
+
+
         
         // in parallel with the creation of the vocabulary and of the inverted index, we can build the documentIndex
         ArrayList<DocumentIndexFileRecord> documentIndexList = this.documentIndex.getSortedList();
@@ -228,6 +238,7 @@ public class Indexer {
         invertedIndexBlockManager.closeBlock();
         vocabularyBlockManager.closeBlock();
         documentIndexBlockManager.closeBlock();
+        skipBlockBlockManager.closeBlock();
 
         System.out.println("Done! The block is made of " + terms.size() + " terms and " + documentIndexList.size() + " documents");
 
@@ -297,30 +308,25 @@ public class Indexer {
 
         // new files for merged vocabulary and inverted index
         VocabularyBlockManager mergedVocabularyBlockManager = null;
-        InvertedIndexBlockManager mergedInvertedIndexBlockManager = null;
+        SplittedInvertedIndexBlockManager mergedInvertedIndexBlockManager = null;
+        SkipBlockBlockManager mergedSkipBlockBlockManager = null;
         try {
             mergedVocabularyBlockManager = new VocabularyBlockManager( "merged-vocabulary", MODE.WRITE);
-            mergedInvertedIndexBlockManager = new InvertedIndexBlockManager("merged-inverted-index", MODE.WRITE);
+            mergedInvertedIndexBlockManager = new SplittedInvertedIndexBlockManager("merged-inverted-index", MODE.WRITE);
+            mergedSkipBlockBlockManager = new SkipBlockBlockManager("merged-skipblocks", MODE.WRITE);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         // open vocabulary and inverted index block files
         VocabularyBlockManager[] arrayVocabularyManagers = new VocabularyBlockManager[currentBlockNo];
-        InvertedIndexBlockManager[] arrayIndexManagers = new InvertedIndexBlockManager[currentBlockNo];
+        SplittedInvertedIndexBlockManager[] arrayIndexManagers = new SplittedInvertedIndexBlockManager[currentBlockNo];
+        SkipBlockBlockManager[] arrayBlockManagers = new SkipBlockBlockManager[currentBlockNo];
 
         VocabularyFileRecord[] vocabularyFileRecords = new VocabularyFileRecord[currentBlockNo];
         ArrayList<Pair<String, Integer>> termBlockList = new ArrayList<>();
 
-        OffsetInvertedIndex offsetMergedInvertedIndex;
-        try {
-            offsetMergedInvertedIndex = OffsetInvertedIndexFactory.createZeroOffsetObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-            offsetMergedInvertedIndex = null;
-            System.exit(-1);
-            return;
-        }
+        int skipBlockOffset = 0;
 
 
         for (int i = 0; i < currentBlockNo; i++) {
@@ -330,7 +336,7 @@ public class Indexer {
                 if (vocabularyFileRecords[i] != null){
                     termBlockList.add(new Pair<String, Integer>(vocabularyFileRecords[i].getTerm(), i));
                 }
-                arrayIndexManagers[i] = new InvertedIndexBlockManager(i, MODE.READ);
+                arrayIndexManagers[i] = new SplittedInvertedIndexBlockManager(i, MODE.READ);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (Exception e) {
@@ -358,13 +364,23 @@ public class Indexer {
                 cf += vocabularyFileRecords[blockId].getCf();
                 int tmpDf = vocabularyFileRecords[blockId].getDf();
                 df += tmpDf;
-                OffsetInvertedIndex tmpOffset = vocabularyFileRecords[blockId].getOffset();
-                try {
-                    postingList.addAll(arrayIndexManagers[blockId].readRow(tmpOffset, tmpDf));
-                } catch (Exception e) {
-                    System.out.println("current term: " + termLexMin);
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
+                int firstSkipBlockOffset = vocabularyFileRecords[blockId].getOffset();
+                int howManySkipBlocks = vocabularyFileRecords[blockId].getHowManySkipBlocks();
+                // TOCHECK: here we have to iterate howManySkipBlocks times to load 
+                // howManySkipBlocks SkipBlocks objects using readRow method of SkipBlockBlockManager class 
+                // and using as starting offset firstSkipBlockOffset
+                // for each SkipBlock obtained, we have to invoke the method arrayIndexManagers[blockId].readRow() giving as parameter the skipBlock
+                // all the arrayList of Posting returned by that readRow method, must be put in the postingList object
+                for (int i = 0; i < howManySkipBlocks; i++) {
+                    SkipBlock sb = null;
+                    try {
+                        sb = arrayBlockManagers[blockId].readRowAt(firstSkipBlockOffset + i * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                        System.exit(-1);
+                    }
+                    postingList.addAll(arrayIndexManagers[blockId].readRow(sb));
                 }
 
                 try {
@@ -382,24 +398,32 @@ public class Indexer {
                     arrayIndexManagers[blockId].closeBlock();
                 }
             }
-            VocabularyFileRecord mergedVocabularyFileRecord = new VocabularyFileRecord(termLexMin, cf, df, offsetMergedInvertedIndex);
-            ArrayList<WrittenBytes> writtenBytes = null;
+            ArrayList<SkipBlock> generatedSkipBlocks = null;
             try {
                 // add the posting list to the resulting inverted index
                 //if(termLexMin.equals("manhattan") || termLexMin.equals("tourism") || termLexMin.equals("tourist")){
                 //    System.out.println("durante la mergeBlock\t" + termLexMin + ": \t" + postingList.toString());
                 //}
-                writtenBytes = mergedInvertedIndexBlockManager.writeRowReturnWriteInfos(postingList);
+
+                generatedSkipBlocks = mergedInvertedIndexBlockManager.writeRowReturnSkipBlockInfos(postingList);
+                
+                for (SkipBlock sb : generatedSkipBlocks) {
+                    mergedSkipBlockBlockManager.writeRow(sb);
+                }
+                
+                VocabularyFileRecord mergedVocabularyFileRecord = new VocabularyFileRecord(termLexMin, cf, df, skipBlockOffset, generatedSkipBlocks.size());
+            
                 mergedVocabularyBlockManager.writeRow(mergedVocabularyFileRecord);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
-            offsetMergedInvertedIndex.forward(writtenBytes);
+            skipBlockOffset += SkipBlock.SKIP_BLOCK_ENTRY_SIZE * generatedSkipBlocks.size();
 
         }
         mergedInvertedIndexBlockManager.closeBlock();
         mergedVocabularyBlockManager.closeBlock();
+        mergedSkipBlockBlockManager.closeBlock();
 
 
     }
