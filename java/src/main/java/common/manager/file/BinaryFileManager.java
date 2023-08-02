@@ -5,6 +5,7 @@ import java.io.*;
 public class BinaryFileManager extends FileManager {
 
     protected DataOutputStream dataOutputStream;
+    protected BufferedOutputStream bufferedOutputStream;
 
     protected RandomAccessFile randomAccessFileInput;
 
@@ -22,7 +23,8 @@ public class BinaryFileManager extends FileManager {
         this.filePath = filePath;
         if (mode == MODE.WRITE) {
             try {
-                this.dataOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filePath)));
+                this.bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(filePath));
+                this.dataOutputStream = new DataOutputStream(bufferedOutputStream);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -80,6 +82,14 @@ public class BinaryFileManager extends FileManager {
         }
     }
 
+    public byte[] readByteArray() throws Exception{
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readByteArray");
+        }
+        // TODO
+        return new byte[0];
+    }
+
 
     @Override
     public void writeInt(int in) throws Exception {
@@ -94,6 +104,23 @@ public class BinaryFileManager extends FileManager {
     }
 
     /**
+     *
+     * @param byteArray
+     * @throws Exception
+     */
+    public void writeByteArray(byte[] byteArray) throws Exception{
+        if(this.mode != MODE.WRITE){
+            throw new Exception("Binary file manager not in MODE.WRITE\tCannot perform writeByteArray");
+        }
+        try {
+            this.bufferedOutputStream.write(byteArray);
+            System.out.println("Successfully wrote the Byte Array to file");
+        } catch (IOException e) {
+            System.err.println("Error occurred while writing Byte Array to file");
+        }
+    }
+
+    /**
      * implements the seek method in reading mode
      * @param byteOffset offset from the starting of the file in bytes
      * @throws IOException
@@ -103,7 +130,7 @@ public class BinaryFileManager extends FileManager {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform seek");
         }
         this.randomAccessFileInput.seek(byteOffset);
-            
+
     }
 
     public long getCurrentPosition() throws IOException{
