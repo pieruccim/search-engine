@@ -14,7 +14,7 @@ public class DeltaCompressorMain {
     }
 
     public static void main(String[] args) throws IOException {
-        int[] integers = {128}; // Example array of integers to compress
+        int[] integers = {127, 130}; // Example array of integers to compress
 
         DeltaCompressor dc = new DeltaCompressor();
         byte[] compressedData = dc.compressIntArray(integers);

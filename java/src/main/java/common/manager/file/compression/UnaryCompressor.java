@@ -22,13 +22,13 @@ public class UnaryCompressor implements Compressor{
             if (num > 0) {
                 nBits += num + 1;
             } else {
-                System.out.println("Skipped element <=0 in the list of integers to be compressed");
+                System.out.println("Skipped element lower than 0 in the list of integers to be compressed");
             }
         }
 
         // Retrieve total number of bytes needed as ceil of nBits/8
         int nBytes = (nBits + 7) / 8;
-        //System.out.println(nBits + " " + nBytes);
+        // System.out.println(nBits + " " + nBytes);
 
         // Initialization of array for the unary representation
         byte[] compressedArray = new byte[nBytes];
@@ -42,7 +42,7 @@ public class UnaryCompressor implements Compressor{
                 continue;
             }
 
-            for (int j = 0; j < num; j++) {
+            for (int j = 0; j < num - 1; j++) {
                 // Setting the j-th bit starting from left to 1
                 compressedArray[nextByteToWrite] |= (byte) (1 << (7 - nextBitToWrite));
 
@@ -101,7 +101,7 @@ public class UnaryCompressor implements Compressor{
                 // i-th bit is set to 0
 
                 // Writing the decompressed number in the array of the results
-                decompressedArray[nextInteger] = onesCounter;
+                decompressedArray[nextInteger] = onesCounter + 1;
 
                 // The decompression of a new integer ends with this bit
                 nextInteger++;
