@@ -16,6 +16,7 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
 
     protected MODE mode;
 
+    protected BinaryBlockManager(){}
 
     public BinaryBlockManager(int blockNo, String blockDirectory, MODE mode) throws IOException{
         if( ! ( new File(blockDirectory)).exists() ){
