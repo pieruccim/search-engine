@@ -5,13 +5,15 @@ public class VocabularyFileRecord{
     String term;
     int cf;
     int df;
-    OffsetInvertedIndex offset;
+    int offset;
+    int howManyBlocks;
 
-    public VocabularyFileRecord(String term, int cf, int df, OffsetInvertedIndex offset) {
+    public VocabularyFileRecord(String term, int cf, int df, int offset, int howManyBlocks) {
         this.term = term;
         this.cf = cf;
         this.df = df;
         this.offset = offset;
+        this.howManyBlocks = howManyBlocks;
     }
 
     public String getTerm() {
@@ -23,12 +25,15 @@ public class VocabularyFileRecord{
     public int getDf() {
         return df;
     }
-    public OffsetInvertedIndex getOffset() {
+    public int getOffset() {
         return offset;
+    }
+    public int getHowManySkipBlocks(){
+        return howManyBlocks;
     }
 
     @Override
     public String toString() {
-        return "VocabularyFileRecord [term=" + term + ", cf=" + cf + ", df=" + df + ", offset=" + offset + "]";
+        return "VocabularyFileRecord [term=" + term + ", cf=" + cf + ", df=" + df + ", offset=" + offset + ", howManyBlocks="+howManyBlocks+"]";
     }
 }
