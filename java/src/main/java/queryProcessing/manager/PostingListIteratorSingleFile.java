@@ -24,7 +24,7 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
     @Override
     public void openList(VocabularyFileRecord vocabularyFileRecord) {
         // the offset must be an instance of OffsetIISingleFile if this postingListIterator type was instantiated
-        OffsetIISingleFile offsetIISingleFile = (OffsetIISingleFile) vocabularyFileRecord.getOffset();
+        OffsetIISingleFile offsetIISingleFile = new OffsetIISingleFile(vocabularyFileRecord.getOffset());
         startingOffset = offsetIISingleFile.getBytesOffsetDocId();
         howManyRecords = vocabularyFileRecord.getDf();
         binaryFileManager = new BinaryFileManager(postingListPath, MODE.READ);
