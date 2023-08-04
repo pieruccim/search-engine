@@ -161,8 +161,8 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             counter+=1;
             if(counter % SplittedInvertedIndexBlockManager.skipBlockMaxLength == 0){
                 // here we write a whole skip block on file and store its informations
-                int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, counter));
-                int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, counter));
+                int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
+                int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
 
                 SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
                 ret.add(sb);
@@ -173,8 +173,8 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             }
         }
 
-        int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, counter));
-        int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, counter));
+        int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
+        int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
 
         SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
         ret.add(sb);
@@ -203,8 +203,15 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         } catch (Exception e) {
             e.printStackTrace();
         }
-        int[] docIds = this.docIdBinaryFileManager.readIntArray(sb.getDocIdByteSize());
-        int[] freqs = this.freqBinaryFileManager.readIntArray(sb.getFreqByteSize());
+        int[] docIds = new int[0];
+        int[] freqs = new int[0];
+
+        try {
+            docIds = this.docIdBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getHowManyPostings());
+            freqs = this.freqBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getHowManyPostings());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         ArrayList<Posting> ret = new ArrayList<Posting>();
 
