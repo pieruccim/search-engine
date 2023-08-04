@@ -277,6 +277,7 @@ public class Indexer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            mergeDocumentIndexBlock(documentIndexBlockManagerReader, documentIndexBlockManagerWriter);
             documentIndexBlockManagerReader.closeBlock();
         }
         // Close file manager
