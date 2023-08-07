@@ -97,10 +97,10 @@ public class BinaryFileManager extends FileManager {
     private byte[] readByteArray(int byteSize) throws Exception{
         byte[] compressedData = new byte[byteSize];
 
-        try(FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(this.filePath), StandardOpenOption.READ)) {
+        try(FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(this.filePath), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
 
             // Instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_ONLY,0, byteSize);
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE,0, byteSize);
 
             if (buffer == null) {
                 return null;
@@ -166,8 +166,9 @@ public class BinaryFileManager extends FileManager {
      */
     private void writeByteArray(byte[] byteArray){
         try {
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(randomAccessFile.getFD()));
-            bufferedOutputStream.write(byteArray);
+            randomAccessFile.write(byteArray);
+            //BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(randomAccessFile.getFD()));
+            //bufferedOutputStream.write(byteArray);
             System.out.println("Successfully wrote the Byte Array to file");
         } catch (IOException e) {
             System.err.println("Error occurred while writing Byte Array to file");

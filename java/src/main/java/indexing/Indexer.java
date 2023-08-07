@@ -322,7 +322,7 @@ public class Indexer {
         // open vocabulary and inverted index block files
         VocabularyBlockManager[] arrayVocabularyManagers = new VocabularyBlockManager[currentBlockNo];
         SplittedInvertedIndexBlockManager[] arrayIndexManagers = new SplittedInvertedIndexBlockManager[currentBlockNo];
-        SkipBlockBlockManager[] arrayBlockManagers = new SkipBlockBlockManager[currentBlockNo];
+        SkipBlockBlockManager[] arraySkipBlockManagers = new SkipBlockBlockManager[currentBlockNo];
 
         VocabularyFileRecord[] vocabularyFileRecords = new VocabularyFileRecord[currentBlockNo];
         ArrayList<Pair<String, Integer>> termBlockList = new ArrayList<>();
@@ -338,6 +338,7 @@ public class Indexer {
                     termBlockList.add(new Pair<String, Integer>(vocabularyFileRecords[i].getTerm(), i));
                 }
                 arrayIndexManagers[i] = new SplittedInvertedIndexBlockManager(i, MODE.READ);
+                arraySkipBlockManagers[i] = new SkipBlockBlockManager(i, MODE.READ);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (Exception e) {
@@ -375,7 +376,7 @@ public class Indexer {
                 for (int i = 0; i < howManySkipBlocks; i++) {
                     SkipBlock sb = null;
                     try {
-                        sb = arrayBlockManagers[blockId].readRowAt(firstSkipBlockOffset + i * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
+                        sb = arraySkipBlockManagers[blockId].readRowAt(firstSkipBlockOffset + i * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();

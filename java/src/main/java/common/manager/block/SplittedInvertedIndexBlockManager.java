@@ -54,9 +54,6 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         } else if (mode == MODE.READ){
             this.openBlock();
         }
-
-        this.unaryCompressor = new UnaryCompressor();
-        this.deltaCompressor = new DeltaCompressor();
     }
 
     public SplittedInvertedIndexBlockManager(String blockName, MODE mode) throws IOException {
@@ -90,8 +87,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             // Delete the existing folders
             emptyPath(f);
         }
-        //TODO: pass the compressor object to the constructor
-        this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE, this.deltaCompressor);
+        this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE, new DeltaCompressor());
 
         //System.out.println(this.freqsBlockPath);
         f = new File(this.freqsBlockPath);
@@ -99,8 +95,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             // Delete the existing folders
             emptyPath(f);
         }
-        //TODO: pass the compressor object to the constructor
-        this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.WRITE, this.unaryCompressor);
+        this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.WRITE, new UnaryCompressor());
     }
 
     private void emptyPath(File file) throws IOException {
@@ -125,12 +120,12 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         if(!f.exists()) {
             throw new IOException("file " + this.docIdsBlockPath + " doesn't exist");
         }
-        this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ);
+        this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ, new DeltaCompressor());
         f = new File(this.freqsBlockPath);
         if(!f.exists()) {
             throw new IOException("file " + this.freqsBlockPath + " doesn't exist");
         }
-        this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.READ);
+        this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.READ,  new UnaryCompressor());
     }
 
     @Override
@@ -159,7 +154,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         int counter = 0;
         int startingIndex = 0;
         long docIdOffset = this.docIdBinaryFileManager.getCurrentPosition();
-        long freqOffset = this.docIdBinaryFileManager.getCurrentPosition();
+        long freqOffset = this.freqBinaryFileManager.getCurrentPosition();
         // here we have to split each posting of the posting array in two integers.
         // we must obtain two arrays of integers, each of them has to be stored on the dedicated file by the binaryfilemanager
         ArrayList<Integer> docIds = new ArrayList<Integer>();
@@ -170,8 +165,8 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             counter+=1;
             if(counter % SplittedInvertedIndexBlockManager.skipBlockMaxLength == 0){
                 // here we write a whole skip block on file and store its informations
-                int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
-                int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
+                int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
+                int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
 
                 SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
                 ret.add(sb);
@@ -182,8 +177,8 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             }
         }
 
-        int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
-        int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()-1).stream().mapToInt(Integer::intValue).toArray());
+        int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
+        int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
 
         SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
         ret.add(sb);
