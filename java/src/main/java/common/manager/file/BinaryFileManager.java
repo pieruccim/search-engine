@@ -8,6 +8,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 
 public class BinaryFileManager extends FileManager {
 
@@ -94,13 +95,13 @@ public class BinaryFileManager extends FileManager {
         }
     }
 
-    private byte[] readByteArray(int byteSize) throws Exception{
+    private byte[] readByteArray(int byteSize, long fileOffset) throws Exception{
         byte[] compressedData = new byte[byteSize];
 
         try(FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(this.filePath), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
 
             // Instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE,0, byteSize);
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE,fileOffset, byteSize);
 
             if (buffer == null) {
                 return null;
@@ -113,7 +114,7 @@ public class BinaryFileManager extends FileManager {
         return compressedData;
     }
 
-    public int[] readIntArray(int byteSize, int howManyInt) throws Exception {
+    public int[] readIntArray(int byteSize, long fileOffset, int howManyInt) throws Exception {
         if (this.mode != MODE.READ) {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform readIntArray");
         }
@@ -126,7 +127,7 @@ public class BinaryFileManager extends FileManager {
         }
         // If the compressor is declared the byte array is decompressed with the preferred method
         else{
-            byte[] compressedData = readByteArray(byteSize);
+            byte[] compressedData = readByteArray(byteSize, fileOffset);
             return compressor.decompressIntArray(compressedData, howManyInt);
         }
     }
@@ -190,6 +191,7 @@ public class BinaryFileManager extends FileManager {
         }
         // If the compressor is declared the integer array is compressed with the preferred method
         else{
+            System.out.println("Number of integers to write: " + intArray.length);
             byte[] compressedArray = compressor.compressIntArray(intArray);
             writeByteArray(compressedArray);
             return compressedArray.length;

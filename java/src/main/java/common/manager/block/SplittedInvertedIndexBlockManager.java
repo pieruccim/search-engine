@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import common.bean.Posting;
 import common.bean.SkipBlock;
@@ -177,6 +178,11 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             }
         }
 
+        // Manage the case in which the posting list has a size multiple of SplittedInvertedIndexBlockManager.skipBlockMaxLength
+        if (docIds.size()%SplittedInvertedIndexBlockManager.skipBlockMaxLength == 0 || freqs.size()%SplittedInvertedIndexBlockManager.skipBlockMaxLength == 0){
+            return ret;
+        }
+
         int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
         int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
 
@@ -211,8 +217,8 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         int[] freqs = new int[0];
 
         try {
-            docIds = this.docIdBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getHowManyPostings());
-            freqs = this.freqBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getHowManyPostings());
+            docIds = this.docIdBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());
+            freqs = this.freqBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings());
         } catch (Exception e) {
             e.printStackTrace();
         }
