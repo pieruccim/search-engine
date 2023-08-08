@@ -15,8 +15,9 @@ public class PostingListIteratorFactory {
             case SINGLE_FILE:
                 postingListIterator = new PostingListIteratorSingleFile();
                 break;
-            //case TWO_FILES:
-                //return new PostingListIteratorTwoFile();
+            case TWO_FILES:
+                postingListIterator = new PostingListIteratorTwoFile();
+                break;
             default:
                 throw new UnsupportedOperationException("Unimplemented OffsetType handling for " + PostingListIteratorFactory.offsetType);
         }

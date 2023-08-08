@@ -4,12 +4,12 @@ import java.util.ArrayList;
 
 public class OffsetIITwoFiles implements OffsetInvertedIndex{
 
-    private int offsetDocId;
-    private int offsetFreq;
+    private long offsetDocId;
+    private long offsetFreq;
     // the delimiter must be different from the delimiters of the other structures 
     private static final String delimiter = "-";
 
-    public OffsetIITwoFiles(int offsetDocId, int offsetFreq){
+    public OffsetIITwoFiles(long offsetDocId, long offsetFreq){
         this.offsetDocId = offsetDocId;
         this.offsetFreq = offsetFreq;
     }
