@@ -5,6 +5,7 @@ import common.bean.VocabularyFileRecord;
 import queryProcessing.manager.PostingListIterator;
 import queryProcessing.manager.PostingListIteratorFactory;
 import queryProcessing.scoring.ScoreFunction;
+import queryProcessing.QueryProcessor.*;
 
 import java.util.*;
 
@@ -55,12 +56,12 @@ public class DAAT {
 
 
     /**
-     *
      * @param queryTerms
-     * @param k corresponds to the best k docs to be returned
+     * @param queryType
+     * @param k          corresponds to the best k docs to be returned
      * @return the k most fitting docs w.r.t. the submitted query
      */
-    public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, int k) {
+    public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryType queryType, int k) {
 
         TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
 

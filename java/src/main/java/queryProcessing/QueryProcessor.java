@@ -94,7 +94,7 @@ public class QueryProcessor {
             queryRecords.add(vocabulary.get(term));
         }
 
-        return this.daat.scoreDocuments(queryRecords, this.scoreFunction, this.nResults);
+        return this.daat.scoreDocuments(queryRecords, this.scoreFunction, this.queryType, this.nResults);
 
 
     }
