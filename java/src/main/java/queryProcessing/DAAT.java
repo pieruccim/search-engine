@@ -9,51 +9,7 @@ import queryProcessing.QueryProcessor.*;
 
 import java.util.*;
 
-public class DAAT {
-
-    public static class DocumentScore  {
-        private int docId;
-        private double score;
-
-        public DocumentScore(int docId, double score) {
-            this.docId = docId;
-            this.score = score;
-        }
-
-        public int getDocId() {
-            return docId;
-        }
-
-        public double getScore() {
-            return score;
-        }
-
-        @Override
-        public String toString() {
-            return "DocumentScore [docId=" + docId + ", score=" + score + "]";
-        }
-
-        public static int compare(DocumentScore o1, DocumentScore o2) {
-            if(o1.getScore() > o2.getScore()){
-                return 1;
-            }else if(o1.getScore() < o2.getScore()){
-                return -1;
-            }else{
-                if(o1.getDocId() > o2.getDocId()){
-                    return -1;
-                }else if(o1.getDocId() < o2.getDocId()){
-                    return 1;
-                }else{
-                    return 0;
-                }
-            }
-        }
-
-
-    }
-
-
-
+public class DAAT extends DocumentProcessor {
 
     /**
      * @param queryTerms
@@ -61,7 +17,8 @@ public class DAAT {
      * @param k          corresponds to the best k docs to be returned
      * @return the k most fitting docs w.r.t. the submitted query
      */
-    public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryType queryType, int k) {
+    @Override
+    public List<DocumentProcessor.DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryType queryType, int k) {
 
 
         TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());

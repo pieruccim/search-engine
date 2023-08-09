@@ -7,11 +7,12 @@ import java.util.List;
 
 import common.bean.VocabularyFileRecord;
 import common.manager.block.VocabularyBlockManager;
-import indexing.manager.IndexManager.IndexRecord;
 import preprocessing.Preprocessor;
-import queryProcessing.DAAT.DocumentScore;
+import queryProcessing.DocumentProcessor.*;
 import queryProcessing.scoring.ScoreFunction;
 import queryProcessing.scoring.TFIDF;
+
+import javax.print.Doc;
 
 public class QueryProcessor {
 
@@ -25,24 +26,36 @@ public class QueryProcessor {
         DISJUNCTIVE
     };
 
+    public enum DocumentProcessorType{
+        DAAT,
+        TAAT
+    };
+
     private QueryType queryType;
     private boolean stopwordsRemoval;
     private boolean wordStemming;
     private int nResults;
 
-    private DAAT daat;
+    private DocumentProcessor documentProcessor;
     private ScoreFunction scoreFunction;
 
     private int numDocs = 100;
 
     private HashMap<String, VocabularyFileRecord> vocabulary;
 
-    public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, Boolean stopwordsRemoval, Boolean wordStemming){
+    public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, DocumentProcessorType documentProcessor, Boolean stopwordsRemoval, Boolean wordStemming){
         this.nResults = nResults;
         System.out.println("USING HARD CODED numDocs value at " + numDocs);
-        
-        //TODO: String documentProcessor type (e.g. DAAT)
-        this.daat = new DAAT(); //TODO: check if it is possible to implement a shared interface among the different type of documentProcessor
+
+        if(documentProcessor == DocumentProcessorType.DAAT) {
+            this.documentProcessor = new DAAT();
+        }
+        else if (documentProcessor == DocumentProcessorType.TAAT){
+            this.documentProcessor = new TAAT();
+        }
+        else{
+            throw new UnsupportedOperationException("unsupported Document Processor type");
+        }
 
         switch (scoringFunctionType) {
             case TFIDF:
@@ -94,7 +107,7 @@ public class QueryProcessor {
             queryRecords.add(vocabulary.get(term));
         }
 
-        return this.daat.scoreDocuments(queryRecords, this.scoreFunction, this.queryType, this.nResults);
+        return this.documentProcessor.scoreDocuments(queryRecords, this.scoreFunction, this.queryType, this.nResults);
 
 
     }

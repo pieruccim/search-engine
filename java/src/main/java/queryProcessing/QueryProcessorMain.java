@@ -1,17 +1,16 @@
 package queryProcessing;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import queryProcessing.DAAT.DocumentScore;
+import queryProcessing.DocumentProcessor.*;
 import queryProcessing.QueryProcessor.QueryType;
 import queryProcessing.QueryProcessor.ScoringFunction;
-import queryProcessing.scoring.ScoreFunction;
+import queryProcessing.QueryProcessor.DocumentProcessorType;
 
 public class QueryProcessorMain {
     public static void main(String[] args) {
-        QueryProcessor queryProcessor = new QueryProcessor(10, ScoringFunction.TFIDF, QueryType.DISJUNCTIVE, true, true);
+        QueryProcessor queryProcessor = new QueryProcessor(10, ScoringFunction.TFIDF, QueryType.DISJUNCTIVE, DocumentProcessorType.TAAT, true, true);
 
         Scanner sc = new Scanner(System.in);
 
