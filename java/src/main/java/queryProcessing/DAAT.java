@@ -63,6 +63,7 @@ public class DAAT {
      */
     public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryType queryType, int k) {
 
+
         TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
 
         // create a map to store PostingListIterators for each query term
@@ -75,47 +76,88 @@ public class DAAT {
             iterators.put(term.getTerm(), iterator);
         }
 
-        // DAAT algorithm
-        while (true) {
-            int minDocId = Integer.MAX_VALUE;
-            boolean allListsProcessed = true;
+        if(queryType == QueryType.DISJUNCTIVE) {
+            // DAAT algorithm disjunctive
+            while (true) {
+                int minDocId = Integer.MAX_VALUE;
+                boolean allListsProcessed = true;
 
-            // find the min docID between the current PostingListIterators
-            for (VocabularyFileRecord term : queryTerms) {
-                PostingListIterator iterator = iterators.get(term.getTerm());
-                if (iterator.hasNext()) {
-                    allListsProcessed = false;
-                    int docId = iterator.next().getDocid();//iterator.getCurrentPosting().getDocid();
-                    minDocId = Math.min(minDocId, docId);
+                // find the min docID between the current PostingListIterators
+                for (VocabularyFileRecord term : queryTerms) {
+                    PostingListIterator iterator = iterators.get(term.getTerm());
+                    if (iterator.hasNext()) {
+                        allListsProcessed = false;
+                        int docId = iterator.next().getDocid();//iterator.getCurrentPosting().getDocid();
+                        minDocId = Math.min(minDocId, docId);
+                    }
+                }
+
+                // if all Posting lists are processed, exit the loop
+                if (allListsProcessed) {
+                    break;
+                }
+
+                // compute the document score for the current document ID
+                double score = computeDocumentScore(queryTerms, iterators, minDocId, scoringFunction);
+
+                // update the min heap with the current document score
+                DocumentScore tmp = new DocumentScore(minDocId, score);
+                priorityQueue.add(tmp);
+                //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
+                if (priorityQueue.size() > k) {
+                    //removes from bottom
+                    tmp = priorityQueue.pollLast();
+                    //System.out.println("Removed the documentscore: " + tmp.toString());
                 }
             }
+        } else if(queryType == QueryType.CONJUNCTIVE){
+            // DAAT algorithm conjunctive
+            int maxDocId = 0;
+            while (true){
 
-            // if all Posting lists are processed, exit the loop
-            if (allListsProcessed) {
-                break;
+                boolean allListsProcessed = true;
+
+                // move forward the PostingListIterators to the next posting with docId greater or equal to maxDocId
+                //TODO: conjunctive queries
+                HashMap<String, Integer> termDocIds = new HashMap<>();
+                while (true) {
+
+                    for (VocabularyFileRecord term : queryTerms) {
+                        PostingListIterator iterator = iterators.get(term.getTerm());
+
+                        if (iterator.hasNext()) {
+                            allListsProcessed = false;
+                            int docId = iterator.nextGEQ(maxDocId).getDocid();
+                            termDocIds.put(term.getTerm(), docId);
+                            maxDocId = Math.max(docId, maxDocId);
+                        }
+                    }
+
+                    Integer firstValue = termDocIds.isEmpty() ? null : termDocIds.values().iterator().next();
+                    if (termDocIds.values().stream().allMatch(value -> value.equals(firstValue))){
+                        break;
+                    }
+                }
+
+                // if all Posting lists are processed, exit the loop
+                if (allListsProcessed) {
+                    break;
+                }
+
+                // compute the document score for the current document ID
+                double score = computeDocumentScore(queryTerms, iterators, maxDocId, scoringFunction);
+
+                // update the max heap with the current document score
+                DocumentScore tmp = new DocumentScore(maxDocId, score);
+                priorityQueue.add(tmp);
+                //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
+                if (priorityQueue.size() > k) {
+                    //removes from bottom
+                    tmp = priorityQueue.pollLast();
+                    //System.out.println("Removed the documentscore: " + tmp.toString());
+                }
+
             }
-
-            // compute the document score for the current document ID
-            double score = computeDocumentScore(queryTerms, iterators, minDocId, scoringFunction);
-
-            // update the min heap with the current document score
-            DocumentScore tmp = new DocumentScore(minDocId, score);
-            priorityQueue.add(tmp);
-            //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
-            if (priorityQueue.size() > k) {
-                //removes from bottom
-                tmp = priorityQueue.pollLast();
-                //System.out.println("Removed the documentscore: " + tmp.toString());
-            }
-
-            // move forward the PostingListIterators to the next document ID for terms that match the minDocId
-            //TODO: conjunctive queries 
-            //for (VocabularyFileRecord term : queryTerms) {
-            //    PostingListIterator iterator = iterators.get(term.getTerm());
-            //    if(iterator.hasNext()){
-            //        iterator.nextGEQ(minDocId);
-            //    }
-            //}
         }
 
         // collect the k highest scoring documents from the priority queue
