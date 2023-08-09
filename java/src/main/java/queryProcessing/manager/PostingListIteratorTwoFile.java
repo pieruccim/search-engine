@@ -107,7 +107,78 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     @Override
     public Posting nextGEQ(long docId) {
-        return null;
+
+        // move to the right skipBlock (skipping the ones that don't contain required docId)
+        while(docId > this.skipBlockArray.get(currentSkipBlock).getMaxDocId()){
+            // iterate until the current skipBlock contains the docId
+            currentSkipBlock += 1;
+        }
+
+        SkipBlock sb = skipBlockArray.get(currentSkipBlock);
+        try {
+            this.nextRecordIndexInBlock = 0;
+
+            docIdsDecompressed.clear();
+            freqsDecompressed.clear();
+
+            docIdsDecompressed.addAll( Arrays.stream(docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings())).boxed().toList() );
+            freqsDecompressed.addAll( Arrays.stream(freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings())).boxed().toList() ) ;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //we can perform binary search to retrieve the first Posting GEQ
+
+        int lowerBound = 0;
+
+        int upperBound;
+        if (currentSkipBlock < skipBlockArray.size()-1){
+            upperBound = skipBlockMaxLen;
+        } else{
+            upperBound = howManyRecords - skipBlockMaxLen * currentSkipBlock;
+        }
+
+        int middle = lowerBound + ((upperBound - lowerBound) / 2);
+
+        int middleDocId = docIdsDecompressed.get(middle);
+
+        while(lowerBound != upperBound){
+
+            if(middleDocId < docId){
+
+                if(middle == lowerBound){
+                    nextRecordIndexInBlock = upperBound;
+                    int docuId = docIdsDecompressed.get(nextRecordIndexInBlock);
+                    int freq = freqsDecompressed.get(nextRecordIndexInBlock);
+                    return this.currentPosting = new Posting(docuId, freq);
+                }
+
+                lowerBound = middle;
+                middle = lowerBound + ((upperBound - lowerBound) / 2);
+
+            }else if(middleDocId == docId){
+                nextRecordIndexInBlock = middle;
+                int docuId = docIdsDecompressed.get(nextRecordIndexInBlock);
+                int freq = freqsDecompressed.get(nextRecordIndexInBlock);
+                return this.currentPosting = new Posting(docuId, freq);
+            }else{
+                // when we have middlePosting.getDocid() > docId
+                upperBound = middle;
+                middle = lowerBound + ((upperBound - lowerBound) / 2);
+            }
+            middleDocId = docIdsDecompressed.get(middle);
+        }
+
+
+        if(middleDocId >= docId){
+            nextRecordIndexInBlock = middle;
+            int docuId = docIdsDecompressed.get(nextRecordIndexInBlock);
+            int freq = freqsDecompressed.get(nextRecordIndexInBlock);
+            return this.currentPosting = new Posting(docuId, freq);
+        }else{
+            //this.currentRecordIndex = this.howManyRecords - 1;
+            return null;
+        }
     }
 
     /**
