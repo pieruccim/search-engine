@@ -5,59 +5,41 @@ import common.bean.VocabularyFileRecord;
 import queryProcessing.manager.PostingListIterator;
 import queryProcessing.manager.PostingListIteratorFactory;
 import queryProcessing.scoring.ScoreFunction;
+import queryProcessing.QueryProcessor.*;
 
 import java.util.*;
 
 public class TAAT extends DocumentProcessor {
 
     @Override
-    public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryProcessor.QueryType queryType, int k) {
+    public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryType queryType, int k) {
 
         TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
-        Map<String, PostingListIterator> iterators = new HashMap<>();
+        Map<Integer, Double> documentScores = new HashMap<>();
 
         for (VocabularyFileRecord term : queryTerms) {
             PostingListIterator iterator = PostingListIteratorFactory.openIterator(term);
-            iterators.put(term.getTerm(), iterator);
+
+            while (iterator.hasNext()) {
+                Posting posting = iterator.next();
+                int docId = posting.getDocid();
+                //get the score for the pair term-doc
+                double termPartialScore = scoringFunction.documentWeight(term, posting);
+                //and sum it to the accumulator
+                documentScores.put(docId, documentScores.getOrDefault(docId, 0.0) + termPartialScore);
+            }
+
+            iterator.closeList();
         }
 
-        // Compute the document scores for each term and accumulate
-        while (true) {
-            boolean allListsProcessed = true;
-
-            double totalScore = 0;
-
-            for (VocabularyFileRecord term : queryTerms) {
-                PostingListIterator iterator = iterators.get(term.getTerm());
-
-                if (iterator.hasNext()) {
-                    allListsProcessed = false;
-
-                    Posting posting = iterator.next();
-                    totalScore += scoringFunction.documentWeight(term, posting);
-                }
-            }
-
-            if (allListsProcessed) {
-                break;
-            }
-
-            // obtain the current document ID
-            int docId = iterators.values().iterator().next().getCurrentPosting().getDocid();
-            priorityQueue.add(new DocumentScore(docId, totalScore));
-
+        //loop through the documentScore map
+        for (Map.Entry<Integer, Double> entry : documentScores.entrySet()) {
+            priorityQueue.add(new DocumentScore(entry.getKey(), entry.getValue()));
             if (priorityQueue.size() > k) {
                 priorityQueue.pollLast();
             }
         }
 
-        List<DocumentScore> bestKdocs = new ArrayList<>(priorityQueue);
-
-        for (PostingListIterator iterator : iterators.values()) {
-            iterator.closeList();
-        }
-
-        return bestKdocs;
+        return new ArrayList<>(priorityQueue);
     }
-
 }
