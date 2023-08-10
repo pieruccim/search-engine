@@ -10,7 +10,7 @@ import queryProcessing.QueryProcessor.DocumentProcessorType;
 
 public class QueryProcessorMain {
     public static void main(String[] args) {
-        QueryProcessor queryProcessor = new QueryProcessor(10, ScoringFunction.TFIDF, QueryType.DISJUNCTIVE, DocumentProcessorType.TAAT, true, true);
+        QueryProcessor queryProcessor = new QueryProcessor(10, ScoringFunction.TFIDF, QueryType.DISJUNCTIVE, DocumentProcessorType.DAAT, true, true);
 
         Scanner sc = new Scanner(System.in);
 
@@ -32,5 +32,6 @@ public class QueryProcessorMain {
                 System.out.println("docID: " + documentScore.getDocId() + " | score: " + documentScore.getScore());
             }
         }
+        sc.close();
     }
 }
