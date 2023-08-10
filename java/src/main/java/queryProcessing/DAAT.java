@@ -72,7 +72,7 @@ public class DAAT extends DocumentProcessor {
             int maxDocId = 0;
             while (true){
 
-                boolean allListsProcessed = true;
+                boolean finished = true;
 
                 // move forward the PostingListIterators to the next posting with docId greater or equal to maxDocId
                 //TODO: conjunctive queries
@@ -82,12 +82,26 @@ public class DAAT extends DocumentProcessor {
                     for (VocabularyFileRecord term : queryTerms) {
                         PostingListIterator iterator = iterators.get(term.getTerm());
 
+                        if(termDocIds.get(term.getTerm()) == maxDocId){
+                            continue;
+                        }
+
                         if (iterator.hasNext()) {
-                            allListsProcessed = false;
+                            finished = false;
                             int docId = iterator.nextGEQ(maxDocId).getDocid();
                             termDocIds.put(term.getTerm(), docId);
                             maxDocId = Math.max(docId, maxDocId);
                         }
+                        else {
+                            // case in which iterator has reached the final posting,
+                            // we can't find another docId that occurs in all iterators
+                            finished = true;
+                            break;
+                        }
+                    }
+
+                    if (finished){
+                        break;
                     }
 
                     Integer firstValue = termDocIds.isEmpty() ? null : termDocIds.values().iterator().next();
@@ -96,8 +110,8 @@ public class DAAT extends DocumentProcessor {
                     }
                 }
 
-                // if all Posting lists are processed, exit the loop
-                if (allListsProcessed) {
+                // if no more docId appear in all the iterators
+                if (finished) {
                     break;
                 }
 
