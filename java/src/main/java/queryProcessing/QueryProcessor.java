@@ -39,18 +39,18 @@ public class QueryProcessor {
     private DocumentProcessor documentProcessor;
     private ScoreFunction scoreFunction;
 
-    private int numDocs = 100;
+    private int numDocs = 20000;
 
     private HashMap<String, VocabularyFileRecord> vocabulary;
 
-    public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, DocumentProcessorType documentProcessor, Boolean stopwordsRemoval, Boolean wordStemming){
+    public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, DocumentProcessorType documentProcessorType, Boolean stopwordsRemoval, Boolean wordStemming){
         this.nResults = nResults;
         System.out.println("USING HARD CODED numDocs value at " + numDocs);
 
-        if(documentProcessor == DocumentProcessorType.DAAT) {
+        if(documentProcessorType == DocumentProcessorType.DAAT) {
             this.documentProcessor = new DAAT();
         }
-        else if (documentProcessor == DocumentProcessorType.TAAT){
+        else if (documentProcessorType == DocumentProcessorType.TAAT){
             this.documentProcessor = new TAAT();
         }
         else{

@@ -170,7 +170,7 @@ public class BinaryFileManager extends FileManager {
             randomAccessFile.write(byteArray);
             //BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(randomAccessFile.getFD()));
             //bufferedOutputStream.write(byteArray);
-            System.out.println("Successfully wrote the Byte Array to file");
+            //System.out.println("Successfully wrote the Byte Array to file");
         } catch (IOException e) {
             System.err.println("Error occurred while writing Byte Array to file");
         }
@@ -191,7 +191,7 @@ public class BinaryFileManager extends FileManager {
         }
         // If the compressor is declared the integer array is compressed with the preferred method
         else{
-            System.out.println("Number of integers to write: " + intArray.length);
+            //System.out.println("Number of integers to write: " + intArray.length);
             byte[] compressedArray = compressor.compressIntArray(intArray);
             writeByteArray(compressedArray);
             return compressedArray.length;
