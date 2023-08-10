@@ -16,7 +16,7 @@ public class VariableByteCompressor implements Compressor{
 
         // In input integer is 0 return byte with all zeros
         if(in == 0){
-            return new byte[]{0};
+            return new byte[]{(byte) 0x80};
         }
 
         // Retrieve the number of bytes needed
@@ -66,7 +66,7 @@ public class VariableByteCompressor implements Compressor{
      *
      * @param compressedData: bytes representing integers in variable byte encoding
      * @param n: total amount of integers to be decoded
-     * @return integers array that is been decoded from input byte array
+     * @return integers array that has been decoded from input byte array
      * @throws IOException
      */
     @Override
