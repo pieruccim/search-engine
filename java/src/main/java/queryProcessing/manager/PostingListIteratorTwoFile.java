@@ -70,11 +70,16 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             return null;
         }
 
-        if(nextRecordIndex % skipBlockMaxLen == 0 || nextRecordIndex == 0) {
+        if(nextRecordIndex % skipBlockMaxLen == 0) {
             // load current skipblock
             if(currentSkipBlockIndex >= this.howManySkipBlocks){
                 // if the skip block is finished and I have to load another skip block but I have read all the skip blocks, the iterator is finished
                 return null;
+            }
+            if(nextRecordIndex == 0){
+                currentSkipBlockIndex = 0;
+            }else{
+                currentSkipBlockIndex += 1;
             }
             SkipBlock sb = this.getCurrentSkipBlock();
             try {
@@ -88,7 +93,6 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            currentSkipBlockIndex += 1;
         }
 
 
@@ -115,34 +119,46 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     @Override
     public Posting nextGEQ(long docId) {
 
+
         //TODO: if the current skip block's max docID is >= docId
         // for the current implementation it is loaded the first posting whose docID is >= of docID,
         // even when that posting comes before the previous current posting
         // this could cause problems because can rewind the iterator
 
-        // move to the right skipBlock (skipping the ones that don't contain required docId)
-        SkipBlock sb = null;
-        while(docId > (sb = this.getCurrentSkipBlock()).getMaxDocId()){
-            // iterate until the current skipBlock contains the docId
-            if(this.hasNextSkipBlock()){
-                currentSkipBlockIndex += 1;
-            }else{
-                //the skip blocks are finished and I have not found a Posting whose docId is >= docId
-                this.nextRecordIndex = this.howManyRecords;
-                return null;
-            }
+        Posting currPosting = this.getCurrentPosting();
+
+        if(currPosting != null && currPosting.getDocid() >= docId){
+            return this.next();
         }
 
-        try {
-            this.nextRecordIndexInBlock = 0;
+        SkipBlock sb = this.getCurrentSkipBlock();
 
-            docIdsDecompressed.clear();
-            freqsDecompressed.clear();
+        if(sb.getMaxDocId() < docId || this.getCurrentPosting() == null){
+            // move to the right skipBlock (skipping the ones that don't contain required docId)
+            
+            while(docId > (sb = this.getCurrentSkipBlock()).getMaxDocId()){
+                // iterate until the current skipBlock contains the docId
+                if(this.hasNextSkipBlock()){
+                    currentSkipBlockIndex += 1;
+                }else{
+                    //the skip blocks are finished and I have not found a Posting whose docId is >= docId
+                    this.nextRecordIndex = this.howManyRecords;
+                    return null;
+                }
+            }
 
-            docIdsDecompressed.addAll( Arrays.stream(docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings())).boxed().toList() );
-            freqsDecompressed.addAll( Arrays.stream(freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings())).boxed().toList() ) ;
-        } catch (Exception e) {
-            e.printStackTrace();
+            try {
+                this.nextRecordIndexInBlock = 0;
+                this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen;
+
+                docIdsDecompressed.clear();
+                freqsDecompressed.clear();
+
+                docIdsDecompressed.addAll( Arrays.stream(docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings())).boxed().toList() );
+                freqsDecompressed.addAll( Arrays.stream(freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings())).boxed().toList() ) ;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         //we can perform binary search to retrieve the first Posting GEQ
@@ -155,8 +171,6 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         int middle = lowerBound + ((upperBound - lowerBound) / 2);
 
         int middleDocId = docIdsDecompressed.get(middle);
-
-        
 
         while(lowerBound != upperBound){
 
@@ -220,6 +234,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     private SkipBlock getSkipBlockAt(int index){
         if(index >= this.howManySkipBlocks){
+            //System.out.println("[getSkipBlockAt]: returning null, given index: " + index + " howManySkipBlocks: " + this.howManySkipBlocks);
             return null;
         }
         try {
@@ -231,7 +246,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         }
     }
     private boolean hasNextSkipBlock(){
-        return this.currentSkipBlockIndex < this.howManySkipBlocks;
+        return this.currentSkipBlockIndex + 1 < this.howManySkipBlocks;
     }
     private SkipBlock getNextSkipBlock(){
         this.currentSkipBlockIndex += 1;

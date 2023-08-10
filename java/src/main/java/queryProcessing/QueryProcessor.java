@@ -46,6 +46,9 @@ public class QueryProcessor {
     public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, DocumentProcessorType documentProcessorType, Boolean stopwordsRemoval, Boolean wordStemming){
         this.nResults = nResults;
         System.out.println("USING HARD CODED numDocs value at " + numDocs);
+        System.out.println("Using DocumentProcessorType: " + documentProcessorType.toString());
+        System.out.println("Using queryType: " + queryType.toString());
+        System.out.println("Using scoringFunctionType: " + scoringFunctionType.toString());
 
         if(documentProcessorType == DocumentProcessorType.DAAT) {
             this.documentProcessor = new DAAT();
