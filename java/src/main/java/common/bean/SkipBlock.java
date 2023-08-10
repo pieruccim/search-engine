@@ -47,4 +47,16 @@ public class SkipBlock {
     public int getFreqByteSize() {
         return freqByteSize;
     }
+
+    @Override
+    public String toString() {
+        return "SkipBlock{" +
+                "docIdFileOffset=" + docIdFileOffset +
+                ", freqFileOffset=" + freqFileOffset +
+                ", maxDocId=" + maxDocId +
+                ", howManyPostings=" + howManyPostings +
+                ", docIdByteSize=" + docIdByteSize +
+                ", freqByteSize=" + freqByteSize +
+                '}';
+    }
 }

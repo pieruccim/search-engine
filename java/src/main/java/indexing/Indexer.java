@@ -178,7 +178,7 @@ public class Indexer {
             // store the posting list of that term in the inverted index
             ArrayList<Posting> postings = record.getPostingList();
 
-            //if(term.equals("manhattan") || term.equals("tourism")  || term.equals("tourist")){
+            //if(term.equals("atom")){
             //    System.out.println("durante la saveBlock\t" + term + ": \t" + postings.toString());
             //}
 
@@ -196,7 +196,9 @@ public class Indexer {
                 for (SkipBlock sb : skipBlocks) {
                     
                         skipBlockBlockManager.writeRow(sb);
-                    
+                        //if(term.equals("atom")){
+                        //    System.out.println("saveblock sb: "+sb.toString());
+                        //}
                 }
             } catch (Exception e) {
                     // TODO Auto-generated catch block
@@ -373,6 +375,9 @@ public class Indexer {
                 // and using as starting offset firstSkipBlockOffset
                 // for each SkipBlock obtained, we have to invoke the method arrayIndexManagers[blockId].readRow() giving as parameter the skipBlock
                 // all the arrayList of Posting returned by that readRow method, must be put in the postingList object
+                //if(termLexMin.equals("atom")){
+                //    System.out.println("howManySkipBlocks: "+howManySkipBlocks);
+                //}
                 for (int i = 0; i < howManySkipBlocks; i++) {
                     SkipBlock sb = null;
                     try {
@@ -382,6 +387,9 @@ public class Indexer {
                         e.printStackTrace();
                         System.exit(-1);
                     }
+                    //if(termLexMin.equals("atom")){
+                    //   System.out.println("sb: "+sb.toString());
+                    //}
                     postingList.addAll(arrayIndexManagers[blockId].readRow(sb));
                 }
 
@@ -403,7 +411,7 @@ public class Indexer {
             ArrayList<SkipBlock> generatedSkipBlocks = null;
             try {
                 // add the posting list to the resulting inverted index
-                //if(termLexMin.equals("manhattan") || termLexMin.equals("tourism") || termLexMin.equals("tourist")){
+                //if(termLexMin.equals("atom") || termLexMin.equals("tourism") || termLexMin.equals("tourist")){
                 //    System.out.println("durante la mergeBlock\t" + termLexMin + ": \t" + postingList.toString());
                 //}
 
