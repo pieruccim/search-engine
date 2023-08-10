@@ -82,13 +82,21 @@ public class DAAT extends DocumentProcessor {
                     for (VocabularyFileRecord term : queryTerms) {
                         PostingListIterator iterator = iterators.get(term.getTerm());
 
-                        if(termDocIds.get(term.getTerm()) == maxDocId){
+                        if(termDocIds.get(term.getTerm()) != null && termDocIds.get(term.getTerm()) == maxDocId){
                             continue;
                         }
 
                         if (iterator.hasNext()) {
                             finished = false;
-                            int docId = iterator.nextGEQ(maxDocId).getDocid();
+                            //System.out.println("Going to call nextGEQ for iterator of term '" + term.getTerm() + "'");
+                            Posting nextPosting = iterator.nextGEQ(maxDocId);
+                            if(nextPosting == null){
+                                // case in which the iterator reached the end
+                                finished = true;
+                                break;
+                            }
+                            int docId = nextPosting.getDocid();
+                            //System.out.println("docId returned: " + docId + "\t given maxDocId: " + maxDocId);
                             termDocIds.put(term.getTerm(), docId);
                             maxDocId = Math.max(docId, maxDocId);
                         }
