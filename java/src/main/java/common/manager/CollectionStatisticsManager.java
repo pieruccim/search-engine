@@ -20,13 +20,17 @@ public class CollectionStatisticsManager {
     }
 
     protected void openFile(MODE mode) throws IOException {
+
+        Files.createDirectories(Paths.get(statsFilePath).getParent());
+        
         File f = new File(this.statsFilePath);
 
         if (mode == MODE.WRITE) {
             if (f.exists()) {
                 emptyPath(f);
             }
-            this.textualFileManager = new TextualFileManager(this.statsFilePath, MODE.WRITE);
+            
+            this.textualFileManager = new TextualFileManager(this.statsFilePath, MODE.WRITE, "UTF-8");
         } else {
             if (!f.exists()) {
                 throw new IOException("File '" + this.statsFilePath + "' doesn't exist");
