@@ -1,15 +1,8 @@
 package indexing;
 
-import common.bean.DocumentIndex;
-import common.bean.DocumentIndexFileRecord;
-import common.bean.OffsetInvertedIndex;
-import common.bean.OffsetInvertedIndexFactory;
-import common.bean.Posting;
-import common.bean.SkipBlock;
-import common.bean.VocabularyFileRecord;
-import common.bean.WrittenBytes;
+import common.bean.*;
+import common.manager.CollectionStatisticsManager;
 import common.manager.block.DocumentIndexBlockManager;
-import common.manager.block.InvertedIndexBlockManager;
 import common.manager.block.SkipBlockBlockManager;
 import common.manager.block.SplittedInvertedIndexBlockManager;
 import common.manager.block.VocabularyBlockManager;
@@ -31,6 +24,7 @@ public class Indexer {
 
     static final private String inputCollection = ConfigLoader.getProperty("data.collection.path");
     static final private String charsetEncoding = ConfigLoader.getProperty("data.charset");
+    static final private String collectionStatisticsFilePath = ConfigLoader.getProperty("collectionStatistics.filePath");
 
     static final private int memoryOccupationThreshold = ConfigLoader.getIntProperty("memory.threshold");
     static private int docIdCounter = 0;
@@ -38,6 +32,8 @@ public class Indexer {
 
     private DocumentIndex documentIndex;
     private IndexManager indexManager;
+    private CollectionStatisticsManager collectionStatisticsManager;
+    private CollectionStatistics collectionStatistics;
 
     public class TermBlockListComparator implements Comparator<Pair<String, Integer>> {
         @Override
@@ -56,6 +52,8 @@ public class Indexer {
     public Indexer(){
         this.documentIndex = new DocumentIndex();
         this.indexManager = new IndexManager();
+        this.collectionStatistics = new CollectionStatistics(0, 0);
+        this.collectionStatisticsManager = new CollectionStatisticsManager(collectionStatisticsFilePath);
     }
 
     private static float getMemoryUsage(boolean debug){
@@ -97,10 +95,18 @@ public class Indexer {
             termCounter.put(term, termCounter.containsKey(term) ? termCounter.get(term)+1 : 1);
         }
 
-        // Update Document Index, Vocabulary and InvertedIndex
+        // Update Document Index, Vocabulary, InvertedIndex and Collection Statistics
+        int totalDocLength = docText.length();
 
-        documentIndex.addInformation(docText.length(), docId, docNo);
+        documentIndex.addInformation(totalDocLength, docId, docNo);
         indexManager.addPostings(docId, termCounter);
+
+        int currentTotalDocs = collectionStatistics.getTotalDocuments();
+        double currentAvgDocLength = collectionStatistics.getAverageDocumentLength();
+        int newTotalDocs = currentTotalDocs + 1;
+        double newAvgDocLength = ((currentAvgDocLength * currentTotalDocs) + totalDocLength) / newTotalDocs;
+        collectionStatistics.setTotalDocuments(newTotalDocs);
+        collectionStatistics.setAverageDocumentLength(newAvgDocLength);
     }
 
     public void processCorpus(){
@@ -133,8 +139,19 @@ public class Indexer {
 
         saveBlock();
         resetDataStructures();
+        //once process corpus is done, I can save CollectionStatistics on file
+        collectionStatisticsManager.saveCollectionStatistics(collectionStatistics);
 
-        //System.out.print(indexManager.toString());
+        /*
+         read test from collection stats:
+        CollectionStatistics collectionStatistics1 = null;
+        try {
+            collectionStatistics1 = collectionStatisticsManager.readCollectionStatistics();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(collectionStatistics1.toString());
+        */
     }
 
     /**
