@@ -26,6 +26,8 @@ public class Indexer {
     static final private String charsetEncoding = ConfigLoader.getProperty("data.charset");
     static final private String collectionStatisticsFilePath = ConfigLoader.getProperty("collectionStatistics.filePath");
 
+    static final private boolean useCompression = ConfigLoader.getPropertyBool("invertedIndex.useCompression");
+
     static final private int memoryOccupationThreshold = ConfigLoader.getIntProperty("memory.threshold");
     static private int docIdCounter = 0;
     static private int currentBlockNo = 0;
@@ -173,7 +175,7 @@ public class Indexer {
         SkipBlockBlockManager skipBlockBlockManager = null;
         try {
             // TODO: SplittedInvertedIndex
-            invertedIndexBlockManager = new SplittedInvertedIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
+            invertedIndexBlockManager = new SplittedInvertedIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE, useCompression);
             vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo, MODE.WRITE);
             documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
             skipBlockBlockManager = new SkipBlockBlockManager(Indexer.currentBlockNo, MODE.WRITE);
@@ -334,7 +336,7 @@ public class Indexer {
         SkipBlockBlockManager mergedSkipBlockBlockManager = null;
         try {
             mergedVocabularyBlockManager = new VocabularyBlockManager( "merged-vocabulary", MODE.WRITE);
-            mergedInvertedIndexBlockManager = new SplittedInvertedIndexBlockManager("merged-inverted-index", MODE.WRITE);
+            mergedInvertedIndexBlockManager = new SplittedInvertedIndexBlockManager("merged-inverted-index", MODE.WRITE, useCompression);
             mergedSkipBlockBlockManager = new SkipBlockBlockManager("merged-skipblocks", MODE.WRITE);
         } catch (IOException e) {
             e.printStackTrace();
@@ -358,7 +360,7 @@ public class Indexer {
                 if (vocabularyFileRecords[i] != null){
                     termBlockList.add(new Pair<String, Integer>(vocabularyFileRecords[i].getTerm(), i));
                 }
-                arrayIndexManagers[i] = new SplittedInvertedIndexBlockManager(i, MODE.READ);
+                arrayIndexManagers[i] = new SplittedInvertedIndexBlockManager(i, MODE.READ, useCompression);
                 arraySkipBlockManagers[i] = new SkipBlockBlockManager(i, MODE.READ);
             } catch (IOException e) {
                 e.printStackTrace();

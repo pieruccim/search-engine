@@ -1,6 +1,7 @@
 data.collection.path=C:\\Users\\nello\\Documents\\Intellij Projects\\search-engine\\test-collection100.tsv
 data.charset=UTF-16
 memory.threshold=75
+invertedIndex.useCompression=FALSE
 blocks.documentIndex.path=${user.dir}/data/output/documentIndexBlocks/
 blocks.vocabulary.path=${user.dir}/data/output/vocabularyBlocks/
 blocks.invertedIndex.path=${user.dir}/data/output/invertedIndexBlocks/

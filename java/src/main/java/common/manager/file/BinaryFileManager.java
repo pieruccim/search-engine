@@ -81,7 +81,10 @@ public class BinaryFileManager extends FileManager {
         if (this.mode != MODE.READ) {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform readInt");
         }
-
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readInt on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
         try {
             this.seek(offset);
             int value = randomAccessFile.readInt();
@@ -122,8 +125,23 @@ public class BinaryFileManager extends FileManager {
         // Check if the compressor is used by this BinaryFileManager
         // If the compressor is not declared ...
         if (compressor == null){
-            //TODO: handle the case in which compressor is not present
-            return new int[0];
+            //byte[] data = new byte[byteSize];
+            //randomAccessFile.seek(fileOffset);
+            //randomAccessFile.read(data);
+            //int [] ret = new int[howManyInt];
+            //for (int i = 0; i < ret.length; i++) {
+            //    ret[i] =    ((data[(i << 2)    ] & 0xFF) << 24) | 
+            //                ((data[(i << 2) + 1] & 0xFF) << 16) | 
+            //                ((data[(i << 2) + 2] & 0xFF) << 8 ) | 
+            //                ((data[(i << 2) + 3] & 0xFF) << 0 );
+            //}
+            //return ret;
+            this.randomAccessFile.seek(fileOffset);
+            int [] ret = new int[howManyInt];
+            for (int i = 0; i < ret.length; i++) {
+                ret[i] = this.randomAccessFile.readInt();
+            }
+            return ret;
         }
         // If the compressor is declared the byte array is decompressed with the preferred method
         else{
@@ -135,6 +153,10 @@ public class BinaryFileManager extends FileManager {
     public long readLong() throws Exception {
         if (this.mode != MODE.READ) {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform readLong");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readLong on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
         }
         try {
             return this.randomAccessFile.readLong();
@@ -151,6 +173,10 @@ public class BinaryFileManager extends FileManager {
     public void writeInt(int in) throws Exception {
         if(this.mode != MODE.WRITE){
             throw new Exception("Binary file manager not in MODE.WRITE\tCannot perform writeInt");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke writeInt on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
         }
         try {
             //unused DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(randomAccessFile.getFD())));
@@ -201,6 +227,10 @@ public class BinaryFileManager extends FileManager {
     public void writeLong(long inLong) throws Exception {
         if(this.mode != MODE.WRITE){
             throw new Exception("Binary file manager not in MODE.WRITE\tCannot perform writeLong");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke writeLong on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
         }
         try {
             this.randomAccessFile.writeLong(inLong);

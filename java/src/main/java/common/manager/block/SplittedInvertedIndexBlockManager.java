@@ -5,12 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import common.bean.Posting;
 import common.bean.SkipBlock;
-import common.bean.WrittenBytes;
-import common.manager.block.VocabularyBlockManager.OffsetType;
 import common.manager.file.BinaryFileManager;
 import common.manager.file.FileManager.MODE;
 import common.manager.file.compression.DeltaCompressor;
@@ -22,18 +19,18 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
     protected BinaryFileManager docIdBinaryFileManager;
     protected BinaryFileManager freqBinaryFileManager;
 
-    protected UnaryCompressor unaryCompressor;
-    protected DeltaCompressor deltaCompressor;
-
     protected String docIdsBlockPath;
     protected String freqsBlockPath;
+
+    protected boolean useCompression = true;
 
     protected static final String docIdsBlockFolder = ConfigLoader.getProperty("blocks.invertedindex.docIdFilePath");
     protected static final String freqBlockFolder = ConfigLoader.getProperty("blocks.invertedindex.freqFilePath");
 
     public static int skipBlockMaxLength = ConfigLoader.getIntProperty("skipblocks.maxLen");
 
-    public SplittedInvertedIndexBlockManager(int blockNo, MODE mode) throws IOException {
+    public SplittedInvertedIndexBlockManager(int blockNo, MODE mode, boolean useCompression) throws IOException {
+        this.useCompression = useCompression;
         this.mode = mode;
         this.blockNo = blockNo;
         this.binaryFileManager = null;  //we do not use this binaryFileManager for code clearness
@@ -57,7 +54,12 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         }
     }
 
-    public SplittedInvertedIndexBlockManager(String blockName, MODE mode) throws IOException {
+    public SplittedInvertedIndexBlockManager(int blockNo, MODE mode) throws IOException {
+        this(blockNo, mode, true);
+    }
+
+    public SplittedInvertedIndexBlockManager(String blockName, MODE mode, boolean useCompression) throws IOException {
+        this.useCompression = useCompression;
         this.mode = mode;
         this.binaryFileManager = null;  //we do not use this binaryFileManager for code clearness
 
@@ -78,6 +80,9 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             this.openBlock();
         }
     }
+    public SplittedInvertedIndexBlockManager(String blockName, MODE mode) throws IOException {
+        this(blockName, mode, true);
+    }
 
     protected void openNewBlock() throws IOException {
         if(this.mode != MODE.WRITE){
@@ -88,15 +93,21 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             // Delete the existing folders
             emptyPath(f);
         }
-        this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE, new DeltaCompressor());
-
+        
+        
         //System.out.println(this.freqsBlockPath);
         f = new File(this.freqsBlockPath);
         if (f.exists()) {
             // Delete the existing folders
             emptyPath(f);
         }
-        this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.WRITE, new UnaryCompressor());
+        if(this.useCompression){
+            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE, new DeltaCompressor());
+            this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.WRITE, new UnaryCompressor());
+        }else{
+            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE);
+            this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.WRITE);
+        }
     }
 
     private void emptyPath(File file) throws IOException {
@@ -121,12 +132,18 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         if(!f.exists()) {
             throw new IOException("file " + this.docIdsBlockPath + " doesn't exist");
         }
-        this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ, new DeltaCompressor());
+        
         f = new File(this.freqsBlockPath);
         if(!f.exists()) {
             throw new IOException("file " + this.freqsBlockPath + " doesn't exist");
         }
-        this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.READ,  new UnaryCompressor());
+        if(this.useCompression){
+            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ, new DeltaCompressor());
+            this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.READ,  new UnaryCompressor());
+        }else{
+            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ);
+            this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.READ);
+        }
     }
 
     @Override
