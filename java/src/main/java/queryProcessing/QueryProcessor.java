@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import common.bean.CollectionStatistics;
 import common.bean.VocabularyFileRecord;
+import common.manager.CollectionStatisticsManager;
 import common.manager.block.VocabularyBlockManager;
+import config.ConfigLoader;
 import preprocessing.Preprocessor;
 import queryProcessing.DocumentProcessor.*;
 import queryProcessing.scoring.ScoreFunction;
@@ -36,16 +39,18 @@ public class QueryProcessor {
     private boolean wordStemming;
     private int nResults;
 
+    private CollectionStatisticsManager collectionStatisticsManager = new CollectionStatisticsManager(ConfigLoader.getProperty("collectionStatistics.filePath"));
     private DocumentProcessor documentProcessor;
     private ScoreFunction scoreFunction;
 
-    private int numDocs = 20000;
+    private int numDocs;
 
     private HashMap<String, VocabularyFileRecord> vocabulary;
 
     public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, DocumentProcessorType documentProcessorType, Boolean stopwordsRemoval, Boolean wordStemming){
         this.nResults = nResults;
-        System.out.println("USING HARD CODED numDocs value at " + numDocs);
+        this.numDocs = getNumDocs();
+        System.out.println("Using numDocs: " + numDocs);
         System.out.println("Using DocumentProcessorType: " + documentProcessorType.toString());
         System.out.println("Using queryType: " + queryType.toString());
         System.out.println("Using scoringFunctionType: " + scoringFunctionType.toString());
@@ -94,6 +99,18 @@ public class QueryProcessor {
         }
         System.out.println("Loaded the vocabulary made of " + vocabulary.size() + " records");
 
+    }
+
+    private int getNumDocs() {
+        CollectionStatistics collectionStatistics;
+        try {
+            collectionStatistics = collectionStatisticsManager.readCollectionStatistics();
+        } catch (IOException e) {
+            System.out.println("Unable to load Collection Statistics");
+            throw new RuntimeException(e);
+        }
+
+        return collectionStatistics.getTotalDocuments();
     }
 
     // it should return an hashmap<String, PostingListIterator> for each query term
