@@ -12,6 +12,7 @@ import common.manager.block.VocabularyBlockManager;
 import config.ConfigLoader;
 import preprocessing.Preprocessor;
 import queryProcessing.DocumentProcessor.*;
+import queryProcessing.scoring.BM25;
 import queryProcessing.scoring.ScoreFunction;
 import queryProcessing.scoring.TFIDF;
 
@@ -69,6 +70,10 @@ public class QueryProcessor {
             case TFIDF:
                 this.scoreFunction = new TFIDF(numDocs);
                 break;
+
+            case BM25:
+                this.scoreFunction = new BM25(numDocs, this.getAvgDocLength());
+                break;
         
             default:
                 throw new UnsupportedOperationException("undefined scoring function");
@@ -111,6 +116,18 @@ public class QueryProcessor {
         }
 
         return collectionStatistics.getTotalDocuments();
+    }
+
+    private double getAvgDocLength() {
+        CollectionStatistics collectionStatistics;
+        try {
+            collectionStatistics = collectionStatisticsManager.readCollectionStatistics();
+        } catch (IOException e) {
+            System.out.println("Unable to load Collection Statistics");
+            throw new RuntimeException(e);
+        }
+
+        return collectionStatistics.getAverageDocumentLength();
     }
 
     // it should return an hashmap<String, PostingListIterator> for each query term
