@@ -35,8 +35,12 @@ public class DAAT extends DocumentProcessor {
 
         if(queryType == QueryType.DISJUNCTIVE) {
             // DAAT algorithm disjunctive
+            
+            
+            int prevMin = Integer.MAX_VALUE;
             while (true) {
                 int minDocId = Integer.MAX_VALUE;
+                
                 boolean allListsProcessed = true;
 
                 // find the min docID between the current PostingListIterators
@@ -44,6 +48,17 @@ public class DAAT extends DocumentProcessor {
                     PostingListIterator iterator = iterators.get(term.getTerm());
                     if (iterator.hasNext()) {
                         allListsProcessed = false;
+
+                        Posting currentPosting = iterator.getCurrentPosting();
+                        if(currentPosting != null && currentPosting.getDocid() != prevMin){
+                            // we want to process one document at a time, starting from the one with the 
+                            // lowest docID, if the current posting of an iterator has a higher docID,
+                            // we do not have to move forward that iterator, but we must consider that posting 
+                            // for the search of the new minimum docID
+                            minDocId = Math.min(minDocId, currentPosting.getDocid());
+                            continue;
+                        }
+
                         int docId = iterator.next().getDocid();//iterator.getCurrentPosting().getDocid();
                         minDocId = Math.min(minDocId, docId);
                     }
@@ -66,6 +81,7 @@ public class DAAT extends DocumentProcessor {
                     tmp = priorityQueue.pollLast();
                     //System.out.println("Removed the documentscore: " + tmp.toString());
                 }
+                prevMin = minDocId;
             }
         } else if(queryType == QueryType.CONJUNCTIVE){
             // DAAT algorithm conjunctive
