@@ -96,7 +96,7 @@ public class Indexer {
         }
 
         // Update Document Index, Vocabulary, InvertedIndex and Collection Statistics
-        int totalDocLength = docText.length();
+        int totalDocLength = terms.length;
 
         documentIndex.addInformation(totalDocLength, docId, docNo);
         indexManager.addPostings(docId, termCounter);
