@@ -111,6 +111,8 @@ public class Indexer {
 
         while((line=txt.readLine()) != null){
 
+            //System.out.print("\rprocessing line " + docIdCounter + "\t memory usage: " + getMemoryUsage(false));
+
             Pair<Integer, String> lineFormatted = null;
 
             try {
@@ -242,7 +244,7 @@ public class Indexer {
         documentIndexBlockManager.closeBlock();
         skipBlockBlockManager.closeBlock();
 
-        System.out.println("Done! The block is made of " + terms.size() + " terms and " + documentIndexList.size() + " documents");
+        System.out.println("Done! The block is made of " + terms.size() + " terms and " + documentIndexList.size() + " documents\tCurrentDocId: " + docIdCounter + "\tcurrent blockNo: " + currentBlockNo);
 
     }
 
