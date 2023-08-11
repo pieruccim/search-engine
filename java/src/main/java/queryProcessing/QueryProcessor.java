@@ -74,7 +74,7 @@ public class QueryProcessor {
                 break;
 
             case BM25:
-                this.scoreFunction = new BM25(numDocs, this.getAvgDocLength(), this.loadDocumentIndexLengthInformation());
+                this.scoreFunction = new BM25(numDocs, this.getAvgDocLength(), this.loadDocumentIndexLengthInformation(), 1.2, 0.75);
                 break;
         
             default:
