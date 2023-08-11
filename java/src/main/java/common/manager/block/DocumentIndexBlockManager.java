@@ -5,12 +5,14 @@ import java.io.IOException;
 
 import common.bean.DocumentIndexFileRecord;
 import common.manager.file.FileManager;
+import common.manager.file.FileManager.MODE;
 import config.ConfigLoader;
 import jdk.jshell.spi.ExecutionControl;
 
 public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexFileRecord>{
 
     protected static String blockDirectory = ConfigLoader.getProperty("blocks.documentIndex.path");
+    protected static String mergedBlockFilePath = ConfigLoader.getProperty("blocks.merged.documentIndex.path");
 
     public DocumentIndexBlockManager(int blockNo, FileManager.MODE mode) throws IOException {
         super(blockNo, blockDirectory, mode);
@@ -47,6 +49,14 @@ public class DocumentIndexBlockManager extends BinaryBlockManager<DocumentIndexF
         } 
 
         return new DocumentIndexFileRecord(docId, docNo, len);
+    }
+
+    public static DocumentIndexBlockManager getMergedFileManager(MODE mode) throws IOException{
+        return new DocumentIndexBlockManager(mergedBlockFilePath.replace(".binary", ""), mode);
+    }
+
+    public static DocumentIndexBlockManager getMergedFileManager() throws IOException{
+        return DocumentIndexBlockManager.getMergedFileManager(MODE.READ);
     }
 
 }

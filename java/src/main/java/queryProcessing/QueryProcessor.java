@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import common.bean.CollectionStatistics;
+import common.bean.DocumentIndexFileRecord;
 import common.bean.VocabularyFileRecord;
 import common.manager.CollectionStatisticsManager;
+import common.manager.block.DocumentIndexBlockManager;
 import common.manager.block.VocabularyBlockManager;
 import config.ConfigLoader;
 import preprocessing.Preprocessor;
@@ -72,7 +74,7 @@ public class QueryProcessor {
                 break;
 
             case BM25:
-                this.scoreFunction = new BM25(numDocs, this.getAvgDocLength());
+                this.scoreFunction = new BM25(numDocs, this.getAvgDocLength(), this.loadDocumentIndexLengthInformation());
                 break;
         
             default:
@@ -128,6 +130,36 @@ public class QueryProcessor {
         }
 
         return collectionStatistics.getAverageDocumentLength();
+    }
+    /**
+     * 
+     * @return an int[] whose length is the same as the number of documents in the collection, 
+     * the array element at index X contains the document length for the document of docID X
+     */
+    private int[] loadDocumentIndexLengthInformation(){
+        DocumentIndexBlockManager documentIndexBlockManager = null;
+        
+        try {
+            documentIndexBlockManager = DocumentIndexBlockManager.getMergedFileManager();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        DocumentIndexFileRecord documentIndexFileRecord = null;
+        
+        int [] documentIndexLengthsInformation = new int[this.getNumDocs()];
+        int i = 0;
+        try {
+            while(( documentIndexFileRecord = documentIndexBlockManager.readRow()) != null){
+                documentIndexLengthsInformation[i] = documentIndexFileRecord.getLen();
+                i+=1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if(i != this.getNumDocs()){
+            System.out.println("[loadDocumentIndexLengthInformation] DEBUG: i: " + i + " \t numDocs: " + this.getNumDocs());
+        }
+        return documentIndexLengthsInformation;
     }
 
     // it should return an hashmap<String, PostingListIterator> for each query term
