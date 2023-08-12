@@ -39,12 +39,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     protected static int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
 
+    static final private boolean useCompression = ConfigLoader.getPropertyBool("invertedIndex.useCompression");
+
     @Override
     public void openList(VocabularyFileRecord vocabularyFileRecord) {
-
-        this.docIdsBinaryFileManager = new BinaryFileManager(docIdsPath, MODE.READ, new DeltaCompressor());
-        this.freqsBinaryFileManager = new BinaryFileManager(freqsPath, MODE.READ, new UnaryCompressor());
-
+        if(useCompression){
+            this.docIdsBinaryFileManager = new BinaryFileManager(docIdsPath, MODE.READ, new DeltaCompressor());
+            this.freqsBinaryFileManager = new BinaryFileManager(freqsPath, MODE.READ, new UnaryCompressor());
+        }else{
+            this.docIdsBinaryFileManager = new BinaryFileManager(docIdsPath, MODE.READ);
+            this.freqsBinaryFileManager = new BinaryFileManager(freqsPath, MODE.READ);
+        }
         this.howManyRecords = vocabularyFileRecord.getDf();
 
         this.howManySkipBlocks = vocabularyFileRecord.getHowManySkipBlocks();
@@ -118,12 +123,6 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     @Override
     public Posting nextGEQ(long docId) {
-
-
-        //TODO: if the current skip block's max docID is >= docId
-        // for the current implementation it is loaded the first posting whose docID is >= of docID,
-        // even when that posting comes before the previous current posting
-        // this could cause problems because can rewind the iterator
 
         Posting currPosting = this.getCurrentPosting();
 
