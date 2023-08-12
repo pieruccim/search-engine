@@ -1,5 +1,7 @@
 package common.manager.file;
 
+import config.ConfigLoader;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
@@ -54,7 +56,56 @@ public abstract class FileManager {
     // metodo per scrivere un intero su file
     abstract void writeInt(int in) throws Exception;
 
-    // metodo per chiudere il file
-    abstract void close();
+    public static void checkExistingOutputFiles() throws IOException {
+        String outputPath = String.valueOf(ConfigLoader.getProperty("data.output.path"));
+        boolean overrideOutputFiles = ConfigLoader.getPropertyBool("output.files.override");
 
+        if (overrideOutputFiles) {
+            if (isDirectoryEmpty(outputPath)) {
+                emptyPath(new File(outputPath));
+            } else {
+                System.out.println("The output directory is not empty. Do you want to override output files? (yes/no)");
+                Scanner scanner = new Scanner(System.in);
+                String response = scanner.nextLine().trim().toLowerCase();
+                scanner.close();
+
+                if (response.equals("yes")) {
+                    emptyPath(new File(outputPath));
+                } else {
+                    System.out.println("Output directory is not empty, indexing aborted. Exiting...");
+                    System.exit(0);
+                }
+            }
+        } else {
+            if (!isDirectoryEmpty(outputPath)) {
+                throw new IOException("Output directory is not empty. Please rename the existing 'output' folder" +
+                        " to distinguish from the new one being created.");
+            }
+        }
+    }
+
+    static boolean isDirectoryEmpty(String path) {
+        File directory = new File(path);
+        if (directory.exists() && directory.isDirectory()) {
+            return directory.list().length == 0;
+        }
+        //treat non-existent directory as empty
+        return true;
+    }
+    public static void emptyPath(File file) throws IOException {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File subFile : files) {
+                    emptyPath(subFile);
+                }
+            }
+        }
+
+        if (file.exists() && !file.delete()) {
+            throw new IOException("Failed to delete file: " + file.getAbsolutePath());
+        }
+    }
+
+    abstract void close();
 }

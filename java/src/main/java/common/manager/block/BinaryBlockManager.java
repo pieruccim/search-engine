@@ -49,29 +49,10 @@ public abstract class BinaryBlockManager<T> implements BlockManager<T> {
         if(this.mode != MODE.WRITE){
             throw new IOException("Cannot open new block since BlockManager mode is not MODE.WRITE\tcurrent mode: " + this.mode);
         }
-        File f = new File(this.blockPath);
-        if (f.exists()) {
-            // Delete the existing folders
-            emptyPath(f);
-        }
 
         this.binaryFileManager = new BinaryFileManager(this.blockPath, MODE.WRITE);
     }
 
-    private void emptyPath(File file) throws IOException {
-        if (file.isDirectory()) {
-            File[] files = file.listFiles();
-            if (files != null) {
-                for (File subFile : files) {
-                    emptyPath(subFile);
-                }
-            }
-        }
-
-        if (!file.delete()) {
-            throw new IOException("Failed to delete file or directory: " + file.getAbsolutePath());
-        }
-    }
 
 
     protected void openBlock() throws IOException {

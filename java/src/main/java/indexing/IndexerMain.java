@@ -1,10 +1,12 @@
 package indexing;
 
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import config.ConfigLoader;
-import javafx.util.Pair;
 import preprocessing.Preprocessor;
+
+import static common.manager.file.FileManager.checkExistingOutputFiles;
 
 public class IndexerMain {
 
@@ -15,6 +17,14 @@ public class IndexerMain {
 
         Preprocessor.setRemoveStopwords(ConfigLoader.getPropertyBool("preprocessing.remove.stopwords"));
         Preprocessor.setPerformStemming(ConfigLoader.getPropertyBool("preprocessing.enable.stemming"));
+
+        //check empty output path
+        try {
+            checkExistingOutputFiles();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
 
         Indexer indexer = new Indexer();
         indexer.processCorpus();
