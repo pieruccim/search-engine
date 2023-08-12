@@ -143,17 +143,6 @@ public class Indexer {
         resetDataStructures();
         //once process corpus is done, I can save CollectionStatistics on file
         collectionStatisticsManager.saveCollectionStatistics(collectionStatistics);
-
-        /*
-         read test from collection stats:
-        CollectionStatistics collectionStatistics1 = null;
-        try {
-            collectionStatistics1 = collectionStatisticsManager.readCollectionStatistics();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println(collectionStatistics1.toString());
-        */
     }
 
     /**
@@ -168,13 +157,11 @@ public class Indexer {
         System.out.println("Saving block...");
 
         // here we need the block number for the current block to load the block managers
-        // TODO: SplittedInvertedIndex
         SplittedInvertedIndexBlockManager invertedIndexBlockManager = null;
         VocabularyBlockManager vocabularyBlockManager = null;
         DocumentIndexBlockManager documentIndexBlockManager = null;
         SkipBlockBlockManager skipBlockBlockManager = null;
         try {
-            // TODO: SplittedInvertedIndex
             invertedIndexBlockManager = new SplittedInvertedIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE, useCompression);
             vocabularyBlockManager = new VocabularyBlockManager(Indexer.currentBlockNo, MODE.WRITE);
             documentIndexBlockManager = new DocumentIndexBlockManager(Indexer.currentBlockNo, MODE.WRITE);
@@ -222,9 +209,8 @@ public class Indexer {
                         //}
                 }
             } catch (Exception e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
-                }
+            }
             
             // we can now save an entry in the vocabulary with docid, df, cf, offset, docno
             VocabularyFileRecord vocabularyRecord = new VocabularyFileRecord(term, record.getCf(), record.getDf(), skipBlockOffset, skipBlocks.size());
