@@ -13,7 +13,7 @@ import java.util.List;
 public class TrecEvalBenchmarks {
 
     private static final String fixed = "Q0";
-    private static final String runId = "RUN-01";
+    private static final String runId = "STANDARD";
     private static final String queriesCharset = ConfigLoader.getProperty("performance.queries.charset");
     private static final String queriesPath = ConfigLoader.getProperty("performance.queries.path");
     private static final String resultsPath = ConfigLoader.getProperty("performance.results.path");
@@ -51,11 +51,14 @@ public class TrecEvalBenchmarks {
             return;
         }
 
+        int i = 1;
+
         //writing results in trec_eval suitable format
         for (DocumentScore documentScore : results) {
             String resultLine = queryId + "\t" + fixed + "\t" + documentScore.getDocId() +
-                    "\t" + documentScore.getScore() + "\t" + runId;
+                    "\t" + i + "\t" + documentScore.getScore() + "\t" + runId;
             resultsFileManager.writeLine(resultLine);
+            i++;
         }
     }
 
