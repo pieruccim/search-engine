@@ -11,10 +11,13 @@ import java.util.List;
 public class TrecEvalBenchmarksMain {
     public static void main(String[] args) {
 
+        //default parameters
         ScoringFunction scoringFunction = ScoringFunction.TFIDF;
         QueryType queryType = QueryType.DISJUNCTIVE;
         DocumentProcessorType documentProcessorType = DocumentProcessorType.DAAT;
         int nResults = 10;
+        boolean stopWordRemoval = true;
+        boolean wordStemming = true;
 
         for (int i = 0; i < args.length; i++) {
             if(args[i].equals("--results") && (i+1) < args.length){
@@ -72,16 +75,38 @@ public class TrecEvalBenchmarksMain {
                 i+=1;
                 continue;
             }
+            if(args[i].equals("--stopWords") && (i+1) < args.length){
+                boolean tmp;
+                try {
+                    tmp = Boolean.parseBoolean(args[i+1]);
+                } catch (IllegalArgumentException e) {
+                    tmp = true; //default to true if parsing fails
+                }
+                stopWordRemoval = tmp;
+                i += 1;
+                continue;
+            }
+            if(args[i].equals("--wordStemming") && (i+1) < args.length){
+                boolean tmp;
+                try {
+                    tmp = Boolean.parseBoolean(args[i+1]);
+                } catch (IllegalArgumentException e) {
+                    tmp = true;
+                }
+                wordStemming = tmp;
+                i += 1;
+            }
         }
 
-        QueryProcessor queryProcessor = new QueryProcessor(nResults, scoringFunction, queryType, documentProcessorType, true, true);
+        QueryProcessor queryProcessor = new QueryProcessor(nResults, scoringFunction, queryType, documentProcessorType, stopWordRemoval, wordStemming);
         TrecEvalBenchmarks teb = new TrecEvalBenchmarks();
 
         //process queries from the tsv trec_eval file
         List<Pair<Integer, String>> queries = teb.readQueries();
-        int c = 0;
+
+        int c = 1;
         for (Pair<Integer, String> queryPair : queries) {
-            System.out.println("Evaluating Query n." + (c+1) + " ...");
+            System.out.println("Evaluating Query n." + c + " ...");
             int queryId = queryPair.getKey();
             String queryText = queryPair.getValue();
 
@@ -89,7 +114,7 @@ public class TrecEvalBenchmarksMain {
             if(results.size()>0){
                 teb.storeTrecEvalResult(queryId, results);
             }else{
-                System.out.println("No relevant docs found for query "+(c+1));
+                System.out.println("No relevant docs found for query " + c);
             }
 
 
