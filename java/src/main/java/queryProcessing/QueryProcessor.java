@@ -18,7 +18,6 @@ import queryProcessing.scoring.BM25;
 import queryProcessing.scoring.ScoreFunction;
 import queryProcessing.scoring.TFIDF;
 
-import javax.print.Doc;
 
 public class QueryProcessor {
 
@@ -53,10 +52,10 @@ public class QueryProcessor {
     public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, DocumentProcessorType documentProcessorType, Boolean stopwordsRemoval, Boolean wordStemming){
         this.nResults = nResults;
         this.numDocs = getNumDocs();
-        //System.out.println("Using numDocs: " + numDocs);
-        //System.out.println("Using DocumentProcessorType: " + documentProcessorType.toString());
-        //System.out.println("Using queryType: " + queryType.toString());
-        //System.out.println("Using scoringFunctionType: " + scoringFunctionType.toString());
+        System.out.println("Using numDocs: " + numDocs);
+        System.out.println("Using DocumentProcessorType: " + documentProcessorType.toString());
+        System.out.println("Using queryType: " + queryType.toString());
+        System.out.println("Using scoringFunctionType: " + scoringFunctionType.toString());
 
         if(documentProcessorType == DocumentProcessorType.DAAT) {
             this.documentProcessor = new DAAT();
