@@ -49,7 +49,7 @@ public class IndexerMain {
 
         System.out.println(new Timestamp(System.currentTimeMillis()) + "\tMerging done\tElapsed time from begin: " + (mergingDoneTime-beginTime) + " millis");
 
-        generateUpperBounds(collectionStatistics, input);
+        generateUpperBounds(collectionStatistics, input, true);
 
         input.close();
         
@@ -64,20 +64,25 @@ public class IndexerMain {
             return;
         }
         Scanner input = new Scanner(System.in);
-        generateUpperBounds(collectionStatistics, input);
+        generateUpperBounds(collectionStatistics, input, true);
         input.close();
     }
 
-    private static void generateUpperBounds(CollectionStatistics collectionStatistics, Scanner input){
+    private static void generateUpperBounds(CollectionStatistics collectionStatistics, Scanner input, boolean doGenerate){
 
 
         for (ScoringFunction scoringFunction : ScoringFunction.values()) {
-            System.out.println("Do you want to compute the upper bounds for the scoring function: '" + scoringFunction + "'? (y/n)");
-            String answer = input.nextLine();
             
-            if( ! answer.toLowerCase().equals("y") ){
-                continue;
+            if(doGenerate == false){
+                System.out.println("Do you want to compute the upper bounds for the scoring function: '" + scoringFunction + "'? (y/n)");
+                String answer = input.nextLine();
+                if( ! answer.toLowerCase().equals("y") ){
+                    continue;
+                }
             }
+
+            System.out.println("Going to generate stats for scoring function "+ scoringFunction);
+
             TermsUpperBoundManager.generateUpperBounds(collectionStatistics, scoringFunction);
         }
     } 

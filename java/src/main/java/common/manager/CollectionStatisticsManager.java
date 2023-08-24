@@ -77,8 +77,12 @@ public class CollectionStatisticsManager {
                 return new CollectionStatistics(totalDocuments, averageDocumentLength);
             }
         }
+
+        this.textualFileManager.close();
+
+        throw new IOException("Cannot read statistics");
         //return null if unable to read or parse collection statistics
-        return null;
+        //return null;
     }
 
     

@@ -80,7 +80,7 @@ public class TermsUpperBoundManager {
      * effectively generates the terms upper bounds
      */
     protected static void generate(VocabularyBlockManager vocabularyBlockManager, ScoreFunction scoreFunction, BinaryFileManager binaryFileManager){
-        
+        int index = 0;
         while (true) {
 
             VocabularyFileRecord vocabularyRecord;
@@ -99,11 +99,12 @@ public class TermsUpperBoundManager {
             double termUpperBound = -1;
             // for each term, we open its iterator
             PostingListIterator iterator = PostingListIteratorFactory.openIterator(vocabularyRecord);
-
+            System.out.print("\rProcessing term no\t" + index + "\t:\t" + vocabularyRecord.getTerm());
             while (iterator.hasNext()) {
                 current = iterator.next();
                 termUpperBound = Math.max(termUpperBound, scoreFunction.documentWeight(vocabularyRecord, current) );
             }
+            iterator.closeList();
             //here, we have iterated over the whole posting list for that term
             try {
                 binaryFileManager.writeDouble(termUpperBound);
@@ -112,7 +113,9 @@ public class TermsUpperBoundManager {
                 System.out.println("[TermsUpperBoundGenerator] execution aborted");
                 return;
             }
+            index++;
         }
+        System.out.println();
     }
 
     /**
