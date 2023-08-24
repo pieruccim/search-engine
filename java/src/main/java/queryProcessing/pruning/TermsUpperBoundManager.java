@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 import common.bean.CollectionStatistics;
@@ -13,6 +14,7 @@ import common.bean.DocumentIndexFileRecord;
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
 import common.manager.block.DocumentIndexBlockManager;
+import common.manager.block.VocabularyBlockManager;
 import common.manager.file.BinaryFileManager;
 import common.manager.file.FileManager.MODE;
 import config.ConfigLoader;
@@ -25,14 +27,8 @@ import queryProcessing.scoring.TFIDF;
 
 public class TermsUpperBoundManager {
 
-    protected CollectionStatistics collectionStatistics;
-    protected ScoreFunction scoreFunction;
-    protected HashMap<String, VocabularyFileRecord> vocabulary;
-
     protected final static String outputFileDirectory = ConfigLoader.getProperty("data.output.upperBounds.path");
-    protected final String outputFilePath;
-
-    protected BinaryFileManager binaryFileManager;
+    
 
     /**
      * You have to instantiate a TermsUpperBoundManager in case of terms upper bound generation,
@@ -41,39 +37,64 @@ public class TermsUpperBoundManager {
      * @param scoringFunctionType
      * @param vocabulary
      */
-    public TermsUpperBoundManager(CollectionStatistics collectionStatistics, ScoringFunction scoringFunctionType, HashMap<String, VocabularyFileRecord> vocabulary){
-        this.collectionStatistics = collectionStatistics;
-        this.vocabulary = vocabulary;
+    static public void generateUpperBounds(CollectionStatistics collectionStatistics, ScoringFunction scoringFunctionType){
+
+        ScoreFunction scoreFunction;
+        VocabularyBlockManager vocabularyBlockManager;
+        final String outputFilePath;
+        BinaryFileManager binaryFileManager;
+        
+        try {
+            vocabularyBlockManager = VocabularyBlockManager.getMergedFileManager();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
 
         switch (scoringFunctionType) {
             case TFIDF:
-                this.outputFilePath = TermsUpperBoundManager.outputFileDirectory + "tfidfUpperBounds.binary";
-                this.handleFileOpening();
-                this.scoreFunction = new TFIDF(collectionStatistics.getTotalDocuments());
+                outputFilePath = TermsUpperBoundManager.outputFileDirectory + "tfidfUpperBounds.binary";
+                binaryFileManager = openUBFile(outputFilePath);
+                scoreFunction = new TFIDF(collectionStatistics.getTotalDocuments());
                 break;
 
             case BM25:
-                this.outputFilePath = TermsUpperBoundManager.outputFileDirectory + "BM25UpperBounds.binary";
-                this.handleFileOpening();
-                this.scoreFunction = new BM25(collectionStatistics.getTotalDocuments(), collectionStatistics.getAverageDocumentLength(), this.loadDocumentIndexLengthInformation(), 1.2, 0.75);
+                outputFilePath = TermsUpperBoundManager.outputFileDirectory + "BM25UpperBounds.binary";
+                binaryFileManager = openUBFile(outputFilePath);
+                scoreFunction = new BM25(collectionStatistics.getTotalDocuments(), collectionStatistics.getAverageDocumentLength(), loadDocumentIndexLengthInformation(collectionStatistics));
                 break;
         
             default:
                 throw new UnsupportedOperationException("undefined scoring function");
         }
         System.out.println("Starting generation of upper bounds...");
-        this.generate();
+        generate(vocabularyBlockManager, scoreFunction, binaryFileManager);
         System.out.println("Done!");
 
-        this.binaryFileManager.close();
+        binaryFileManager.close();
+        vocabularyBlockManager.closeBlock();
 
     }
     /**
      * effectively generates the terms upper bounds
      */
-    protected void generate(){
+    protected static void generate(VocabularyBlockManager vocabularyBlockManager, ScoreFunction scoreFunction, BinaryFileManager binaryFileManager){
         
-        for (VocabularyFileRecord vocabularyRecord : this.vocabulary.values()) {
+        while (true) {
+
+            VocabularyFileRecord vocabularyRecord;
+            try {
+                vocabularyRecord = vocabularyBlockManager.readRow();
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
+
+            if(vocabularyRecord == null){
+                break;
+            }
+
             Posting current = null;
             double termUpperBound = -1;
             // for each term, we open its iterator
@@ -81,7 +102,7 @@ public class TermsUpperBoundManager {
 
             while (iterator.hasNext()) {
                 current = iterator.next();
-                termUpperBound = Math.max(termUpperBound, this.scoreFunction.documentWeight(vocabularyRecord, current) );
+                termUpperBound = Math.max(termUpperBound, scoreFunction.documentWeight(vocabularyRecord, current) );
             }
             //here, we have iterated over the whole posting list for that term
             try {
@@ -97,17 +118,18 @@ public class TermsUpperBoundManager {
     /**
      * function that checks if a file already exists with that file name, in that case asks to the user if the file has to be overwritten
      * then it opens the binaryFileManager for that file
+     * it opens the file in write mode
      */
-    private void handleFileOpening(){
+    private static BinaryFileManager openUBFile(String outputFilePath){
         if( ! ( new File(TermsUpperBoundManager.outputFileDirectory)).exists() ){
             try {
                 Files.createDirectories(Paths.get(TermsUpperBoundManager.outputFileDirectory));
             } catch (IOException e) {
-                System.out.println("[TermsUpperBoundGenerator.handleFileOpening]: Could not create directories for the path: " + outputFileDirectory);
+                System.out.println("[TermsUpperBoundGenerator.openUBFile]: Could not create directories for the path: " + outputFileDirectory);
                 e.printStackTrace();
             }
         }
-        this.binaryFileManager = new BinaryFileManager(this.outputFilePath, MODE.WRITE);
+        return new BinaryFileManager(outputFilePath, MODE.WRITE);
     }
 
 
@@ -153,7 +175,7 @@ public class TermsUpperBoundManager {
      * @return an int[] whose length is the same as the number of documents in the collection, 
      * the array element at index X contains the document length for the document of docID X
      */
-    private int[] loadDocumentIndexLengthInformation(){
+    private static int[] loadDocumentIndexLengthInformation(CollectionStatistics collectionStatistics){
         DocumentIndexBlockManager documentIndexBlockManager = null;
         
         try {
