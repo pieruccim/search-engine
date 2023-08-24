@@ -56,7 +56,7 @@ public abstract class FileManager {
     // metodo per scrivere un intero su file
     abstract void writeInt(int in) throws Exception;
 
-    public static void checkExistingOutputFiles() throws IOException {
+    public static void checkExistingOutputFiles(Scanner scanner) throws IOException {
         String outputPath = String.valueOf(ConfigLoader.getProperty("data.output.path"));
         boolean overrideOutputFiles = ConfigLoader.getPropertyBool("output.files.override");
 
@@ -64,11 +64,9 @@ public abstract class FileManager {
             if (isDirectoryEmpty(outputPath)) {
                 emptyPath(new File(outputPath));
             } else {
-                System.out.println("The output directory is not empty. Do you want to override output files? (yes/no)");
-                Scanner scanner = new Scanner(System.in);
+                System.out.println("The output directory '" + outputPath + "' is not empty. Do you want to override output files? (yes/no)");
                 String response = scanner.nextLine().trim().toLowerCase();
-                scanner.close();
-
+                
                 if (response.equals("yes")) {
                     emptyPath(new File(outputPath));
                 } else {

@@ -3,8 +3,14 @@ package indexing;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.Scanner;
+
+import common.bean.CollectionStatistics;
+import common.manager.CollectionStatisticsManager;
 import config.ConfigLoader;
 import preprocessing.Preprocessor;
+import queryProcessing.QueryProcessor.ScoringFunction;
+import queryProcessing.pruning.TermsUpperBoundManager;
 
 import static common.manager.file.FileManager.checkExistingOutputFiles;
 
@@ -15,12 +21,14 @@ public class IndexerMain {
         long beginTime = System.currentTimeMillis();
         System.out.println(new Timestamp(System.currentTimeMillis()) + "\tStarting...");
 
+        Scanner input = new Scanner(System.in);
+
         Preprocessor.setRemoveStopwords(ConfigLoader.getPropertyBool("preprocessing.remove.stopwords"));
         Preprocessor.setPerformStemming(ConfigLoader.getPropertyBool("preprocessing.enable.stemming"));
 
         //check empty output path
         try {
-            checkExistingOutputFiles();
+            checkExistingOutputFiles(input);
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(-1);
@@ -28,6 +36,8 @@ public class IndexerMain {
 
         Indexer indexer = new Indexer();
         indexer.processCorpus();
+
+        CollectionStatistics collectionStatistics = indexer.getCollectionStatistics();
 
         long processingDoneTime = System.currentTimeMillis();
 
@@ -39,5 +49,36 @@ public class IndexerMain {
 
         System.out.println(new Timestamp(System.currentTimeMillis()) + "\tMerging done\tElapsed time from begin: " + (mergingDoneTime-beginTime) + " millis");
 
+        generateUpperBounds(collectionStatistics, input);
+
+        input.close();
+        
     }
+
+    public static void upperBoundOnly(String[] args){
+        CollectionStatistics collectionStatistics;
+        try {
+            collectionStatistics = (new CollectionStatisticsManager(ConfigLoader.getProperty("collectionStatistics.filePath"))).readCollectionStatistics();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        Scanner input = new Scanner(System.in);
+        generateUpperBounds(collectionStatistics, input);
+        input.close();
+    }
+
+    private static void generateUpperBounds(CollectionStatistics collectionStatistics, Scanner input){
+
+
+        for (ScoringFunction scoringFunction : ScoringFunction.values()) {
+            System.out.println("Do you want to compute the upper bounds for the scoring function: '" + scoringFunction + "'? (y/n)");
+            String answer = input.nextLine();
+            
+            if( ! answer.toLowerCase().equals("y") ){
+                continue;
+            }
+            TermsUpperBoundManager.generateUpperBounds(collectionStatistics, scoringFunction);
+        }
+    } 
 }

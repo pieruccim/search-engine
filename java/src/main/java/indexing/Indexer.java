@@ -445,4 +445,9 @@ public class Indexer {
 
     }
 
+
+    public CollectionStatistics getCollectionStatistics() {
+        return collectionStatistics;
+    }
+
 }
