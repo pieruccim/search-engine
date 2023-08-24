@@ -14,7 +14,7 @@ public class QueryProcessorMain {
 
         ScoringFunction scoringFunction = ScoringFunction.TFIDF;
         QueryType queryType = QueryType.DISJUNCTIVE;
-        DocumentProcessorType documentProcessorType = DocumentProcessorType.DAAT;
+        DocumentProcessorType documentProcessorType = DocumentProcessorType.MAXSCORE;
         int nResults = Integer.parseInt(ConfigLoader.getProperty("query.parameters.nResults"));
         boolean stopWordRemoval = Boolean.parseBoolean(ConfigLoader.getProperty("preprocessing.remove.stopwords"));
         boolean wordStemming = Boolean.parseBoolean(ConfigLoader.getProperty("preprocessing.enable.stemming"));

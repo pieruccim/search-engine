@@ -30,17 +30,19 @@ public class MaxScore extends DocumentProcessor{
     @Override
     public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction,
             QueryType queryType, int k) {
-        
-        if( ! ( queryTerms.get(0) instanceof VocabularyFileRecordUB ) ){
-            throw new UnsupportedOperationException("[scoreDocuments] must receive a List of VocabularyFileRecordUB");
+
+            throw new UnsupportedOperationException();
+
         }
 
-        List<VocabularyFileRecordUB> qT = new ArrayList<VocabularyFileRecordUB>();
+    /**
+     * this method must receive a List of VocabularyFileRecordUB, so that it can access to the upperbound information for each query term
+     */
+    public List<DocumentScore> scoreDocumentsUB(List<VocabularyFileRecordUB> qT, ScoreFunction scoringFunction,
+            QueryType queryType, int k) {
+
+
         TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
-        
-        for (VocabularyFileRecord vocabularyFileRecord : queryTerms) {
-            qT.add( (VocabularyFileRecordUB) vocabularyFileRecord);
-        }
         
         // here we have to split the posting lists between the essential and the non-essential ones
 
@@ -98,7 +100,7 @@ public class MaxScore extends DocumentProcessor{
             }
 
             currentPartialScore = computeDocumentScore(qTEssential, essentialIterators, currentDocId, scoringFunction);
-
+            //System.out.println("docID: " + currentDocId + "\t partialScore: " + currentPartialScore);
             double currentUpperBound = currentPartialScore + nonEssentialTermUpperBound;
 
             if(currentUpperBound < threshold){
@@ -109,7 +111,7 @@ public class MaxScore extends DocumentProcessor{
 
 
             // sum the term upper bounds for all non-essential posting lists
-            for (int i = nonEssentialIterators.size(); i >= 0; i--) {
+            for (int i = nonEssentialIterators.size() - 1; i >= 0; i--) {
                 // we start computing the effective score for the document in each posting list starting from the one with
                 // the highest upperbound
 
@@ -190,7 +192,7 @@ public class MaxScore extends DocumentProcessor{
 
                 posting = postingListIterator.getCurrentPosting();
 
-                if(posting != null && posting.getDocid() != lastDocId){
+                if(posting != null && posting.getDocid() > lastDocId){
                     nextDocId = Math.min(nextDocId, posting.getDocid());
                     allDone = false;
                     continue;
@@ -233,7 +235,7 @@ public class MaxScore extends DocumentProcessor{
 
                     posting = postingListIterator.getCurrentPosting();
 
-                    if(posting != null && posting.getDocid() != lastDocId){
+                    if(posting != null && posting.getDocid() > lastDocId){
 
                         allDone = false;
 

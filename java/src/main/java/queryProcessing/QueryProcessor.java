@@ -8,12 +8,13 @@ import java.util.List;
 import common.bean.CollectionStatistics;
 import common.bean.DocumentIndexFileRecord;
 import common.bean.VocabularyFileRecord;
+import common.bean.VocabularyFileRecordUB;
 import common.manager.CollectionStatisticsManager;
 import common.manager.block.DocumentIndexBlockManager;
-import common.manager.block.VocabularyBlockManager;
 import config.ConfigLoader;
 import preprocessing.Preprocessor;
 import queryProcessing.DocumentProcessor.*;
+import queryProcessing.manager.VocabularyManager;
 import queryProcessing.scoring.BM25;
 import queryProcessing.scoring.ScoreFunction;
 import queryProcessing.scoring.TFIDF;
@@ -33,7 +34,8 @@ public class QueryProcessor {
 
     public enum DocumentProcessorType{
         DAAT,
-        TAAT
+        TAAT,
+        MAXSCORE
     };
 
     private QueryType queryType;
@@ -48,6 +50,9 @@ public class QueryProcessor {
     private int numDocs;
 
     private HashMap<String, VocabularyFileRecord> vocabulary;
+    private HashMap<String, VocabularyFileRecordUB> vocabularyUB;
+
+    private DocumentProcessorType documentProcessorType;
 
     public QueryProcessor(int nResults, ScoringFunction scoringFunctionType, QueryType queryType, DocumentProcessorType documentProcessorType, Boolean stopwordsRemoval, Boolean wordStemming){
         this.nResults = nResults;
@@ -57,11 +62,15 @@ public class QueryProcessor {
         System.out.println("Using queryType: " + queryType.toString());
         System.out.println("Using scoringFunctionType: " + scoringFunctionType.toString());
 
+        this.documentProcessorType = documentProcessorType;
+
         if(documentProcessorType == DocumentProcessorType.DAAT) {
             this.documentProcessor = new DAAT();
         }
         else if (documentProcessorType == DocumentProcessorType.TAAT){
             this.documentProcessor = new TAAT();
+        }else if(documentProcessorType == DocumentProcessorType.MAXSCORE){
+            this.documentProcessor = new MaxScore(4.0);
         }
         else{
             throw new UnsupportedOperationException("unsupported Document Processor type");
@@ -87,21 +96,10 @@ public class QueryProcessor {
         Preprocessor.setPerformStemming(this.wordStemming);
         Preprocessor.setRemoveStopwords(this.stopwordsRemoval);
 
-        VocabularyBlockManager vocabularyBlockManager = null;
-        
-        try {
-            vocabularyBlockManager = VocabularyBlockManager.getMergedFileManager();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        VocabularyFileRecord vocabularyFileRecord = null;
-        this.vocabulary = new HashMap<String, VocabularyFileRecord>();
-        try {
-            while(( vocabularyFileRecord = vocabularyBlockManager.readRow()) != null){
-                vocabulary.put(vocabularyFileRecord.getTerm(), vocabularyFileRecord);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if(documentProcessorType == DocumentProcessorType.MAXSCORE){
+            this.vocabularyUB = VocabularyManager.loadVocabularyWithUBs(scoringFunctionType);
+        }else{
+            this.vocabulary = VocabularyManager.loadVocabulary();
         }
         //System.out.println("Loaded the vocabulary made of " + vocabulary.size() + " records");
 
@@ -166,17 +164,32 @@ public class QueryProcessor {
 
         String[] queryTerms = Preprocessor.processText(query, false);
 
-        ArrayList<VocabularyFileRecord> queryRecords = new ArrayList<VocabularyFileRecord>();
+        if(documentProcessorType != DocumentProcessorType.MAXSCORE){
 
-        for (String term : queryTerms) {
-            if(! vocabulary.containsKey(term)){
-                continue;
+            ArrayList<VocabularyFileRecord> queryRecords = new ArrayList<VocabularyFileRecord>();
+
+            for (String term : queryTerms) {
+                if(! vocabulary.containsKey(term)){
+                    continue;
+                }
+                queryRecords.add(vocabulary.get(term));
             }
-            queryRecords.add(vocabulary.get(term));
+
+            return this.documentProcessor.scoreDocuments(queryRecords, this.scoreFunction, this.queryType, this.nResults);
+        }else{
+
+            ArrayList<VocabularyFileRecordUB> queryRecords = new ArrayList<VocabularyFileRecordUB>();
+
+            for (String term : queryTerms) {
+                if(! vocabularyUB.containsKey(term)){
+                    continue;
+                }
+                queryRecords.add(vocabularyUB.get(term));
+            }
+
+            return ((MaxScore) this.documentProcessor).scoreDocumentsUB(queryRecords, this.scoreFunction, this.queryType, this.nResults);
+
         }
-
-        return this.documentProcessor.scoreDocuments(queryRecords, this.scoreFunction, this.queryType, this.nResults);
-
 
     }
 }
