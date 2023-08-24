@@ -60,6 +60,10 @@ public class BinaryFileManager extends FileManager {
         if (this.mode != MODE.READ) {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform readInt");
         }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readInt on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
         try {
             return this.randomAccessFile.readInt();
         }catch(EOFException e){
@@ -95,6 +99,80 @@ public class BinaryFileManager extends FileManager {
         } catch (IOException e) {
             e.printStackTrace();
             throw new Exception("Error reading integer from the binary file");
+        }
+    }
+
+    public float readFloat() throws EOFException, Exception {
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readFloat");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readFloat on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            return this.randomAccessFile.readFloat();
+        }catch(EOFException e){
+            throw e; // in case of EOFException, it is thrown directly
+        }catch (IOException e) {
+            e.printStackTrace();
+            throw new Exception("Error reading float from the binary file");
+        }
+    }
+
+    public float readFloat(long offset) throws Exception {
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readFloat");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readFloat on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            this.seek(offset);
+            return randomAccessFile.readFloat();
+        } catch (EOFException e) {
+            throw new Exception("End of file reached while reading float");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new Exception("Error reading float from the binary file");
+        }
+    }
+
+    public double readDouble() throws EOFException, Exception {
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readDouble");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readDouble on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            return this.randomAccessFile.readDouble();
+        }catch(EOFException e){
+            throw e; // in case of EOFException, it is thrown directly
+        }catch (IOException e) {
+            e.printStackTrace();
+            throw new Exception("Error reading double from the binary file");
+        }
+    }
+
+    public double readDouble(long offset) throws Exception {
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readDouble");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readDouble on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            this.seek(offset);
+            return randomAccessFile.readDouble();
+        } catch (EOFException e) {
+            throw new Exception("End of file reached while reading double");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new Exception("Error reading double from the binary file");
         }
     }
 
@@ -181,6 +259,36 @@ public class BinaryFileManager extends FileManager {
         try {
             //unused DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(randomAccessFile.getFD())));
             this.randomAccessFile.writeInt(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeFloat(float in) throws Exception{
+        if(this.mode != MODE.WRITE){
+            throw new Exception("Binary file manager not in MODE.WRITE\tCannot perform writeFloat");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke writeFloat on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            this.randomAccessFile.writeFloat(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeDouble(double in) throws Exception{
+        if(this.mode != MODE.WRITE){
+            throw new Exception("Binary file manager not in MODE.WRITE\tCannot perform writeDouble");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke writeDouble on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            this.randomAccessFile.writeDouble(in);
         } catch (Exception e) {
             e.printStackTrace();
         }
