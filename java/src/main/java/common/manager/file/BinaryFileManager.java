@@ -179,10 +179,10 @@ public class BinaryFileManager extends FileManager {
     private byte[] readByteArray(int byteSize, long fileOffset) throws Exception{
         byte[] compressedData = new byte[byteSize];
 
-        try(FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(this.filePath), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+        /*try(FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(this.filePath), StandardOpenOption.READ)) {
 
             // Instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE,fileOffset, byteSize);
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_ONLY,fileOffset, byteSize);
 
             if (buffer == null) {
                 return null;
@@ -190,7 +190,10 @@ public class BinaryFileManager extends FileManager {
 
             // Read bytes from file
             buffer.get(compressedData, 0, byteSize);
-        }
+        }*/
+
+        this.randomAccessFile.seek(fileOffset);
+        this.randomAccessFile.read(compressedData, 0, byteSize);
 
         return compressedData;
     }
