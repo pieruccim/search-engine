@@ -103,14 +103,16 @@ public class TrecEvalBenchmarksMain {
 
         //process queries from the tsv trec_eval file
         List<Pair<Integer, String>> queries = teb.readQueries();
+        teb.closeQueriesFileManager();
         
         double sumQueryProcessingTimes = 0; 
         double sumSquaredDifferences = 0;
 
         int c = 1;
         for (Pair<Integer, String> queryPair : queries) {
-            System.out.println("Evaluating Query n." + c + " ...");
-            int queryId = queryPair.getKey();
+            String output = "Evaluating Query n." + c + "/" + queries.size() + " ...";
+            System.out.print(output + "\r");
+            //int queryId = queryPair.getKey();
             String queryText = queryPair.getValue();
 
             long start = System.currentTimeMillis();
@@ -118,7 +120,7 @@ public class TrecEvalBenchmarksMain {
             long end = System.currentTimeMillis();
             long elapsed = end - start;
             sumQueryProcessingTimes += elapsed;
-            sumSquaredDifferences += Math.pow(elapsed - (sumQueryProcessingTimes / c), 2);
+            sumSquaredDifferences += (elapsed - (sumQueryProcessingTimes / c)) * (elapsed - (sumQueryProcessingTimes / c));
 
             if(results.size()>0){
                 teb.storeTrecEvalResult(queryId, results);
@@ -137,7 +139,6 @@ public class TrecEvalBenchmarksMain {
             }*/
         }
 
-        teb.closeQueriesFileManager();
         teb.closeResultFileManager();
         System.out.println("Done saving queries scores");
         System.out.println("Average query time: " + String.format("%.2f", sumQueryProcessingTimes/queries.size()) + "ms ± " + String.format("%.1f", Math.sqrt(sumSquaredDifferences / queries.size())));
