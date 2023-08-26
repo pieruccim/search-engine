@@ -262,11 +262,14 @@ public class Indexer {
      */
 
     public void mergeDataStructures(){
+        System.out.println("Start of merging phase ...");
         mergeDocumentIndex();
         mergeInvertedIndex();
     }
 
     private void mergeDocumentIndex(){
+
+        System.out.println("Merging Document Index ...");
 
         DocumentIndexBlockManager documentIndexBlockManagerReader = null;
         DocumentIndexBlockManager documentIndexBlockManagerWriter = null;
@@ -315,6 +318,8 @@ public class Indexer {
     }
 
     private void mergeInvertedIndex(){
+
+        System.out.println("Merging Inverted Index ...");
 
         // new files for merged vocabulary and inverted index
         VocabularyBlockManager mergedVocabularyBlockManager = null;

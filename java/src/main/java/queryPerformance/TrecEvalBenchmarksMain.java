@@ -112,7 +112,7 @@ public class TrecEvalBenchmarksMain {
         for (Pair<Integer, String> queryPair : queries) {
             String output = "Evaluating Query n." + c + "/" + queries.size() + " ...";
             System.out.print(output + "\r");
-            //int queryId = queryPair.getKey();
+            int queryId = queryPair.getKey();
             String queryText = queryPair.getValue();
 
             long start = System.currentTimeMillis();
