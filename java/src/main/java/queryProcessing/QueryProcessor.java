@@ -141,6 +141,39 @@ public class QueryProcessor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        //DocumentIndexFileRecord documentIndexFileRecord = null;
+        
+        int [] documentIndexLengthsInformation = new int[this.getNumDocs()];
+        int i = 0;
+        int howMany = -1;
+        
+        while (howMany != 0) {
+            howMany = documentIndexBlockManager.readDocumentLenghtsList(documentIndexLengthsInformation, i);
+            i += howMany;
+        }
+        
+
+        if(i != this.getNumDocs()){
+            System.out.println("[loadDocumentIndexLengthInformation] DEBUG: i: " + i + " \t numDocs: " + this.getNumDocs());
+        }
+
+        //for (int id = 1000; id < 1100; id+=10) {
+        //    System.out.println("document lenth for docid: " + id + " -> " + documentIndexLengthsInformation[id]);
+        //}
+        
+
+        return documentIndexLengthsInformation;
+    }
+
+
+    private int[] DEPRECATED(){
+        DocumentIndexBlockManager documentIndexBlockManager = null;
+        
+        try {
+            documentIndexBlockManager = DocumentIndexBlockManager.getMergedFileManager();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         DocumentIndexFileRecord documentIndexFileRecord = null;
         
         int [] documentIndexLengthsInformation = new int[this.getNumDocs()];
@@ -156,6 +189,43 @@ public class QueryProcessor {
         if(i != this.getNumDocs()){
             System.out.println("[loadDocumentIndexLengthInformation] DEBUG: i: " + i + " \t numDocs: " + this.getNumDocs());
         }
+
+        
+        for (int id = 1000; id < 1100; id+=10) {
+            System.out.println("document lenth for docid: " + id + " -> " + documentIndexLengthsInformation[id]);
+        }
+
+        return documentIndexLengthsInformation;
+    }
+
+    private int[] VERY_DEPRECATED(){
+        DocumentIndexBlockManager documentIndexBlockManager = null;
+        
+        try {
+            documentIndexBlockManager = DocumentIndexBlockManager.getMergedFileManager();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        DocumentIndexFileRecord documentIndexFileRecord = null;
+        
+        int [] documentIndexLengthsInformation = new int[this.getNumDocs()];
+        int i = 0;
+        try {
+            while(( documentIndexFileRecord = documentIndexBlockManager.readRow()) != null){
+                documentIndexLengthsInformation[i] = documentIndexFileRecord.getLen();
+                i+=1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if(i != this.getNumDocs()){
+            System.out.println("[loadDocumentIndexLengthInformation] DEBUG: i: " + i + " \t numDocs: " + this.getNumDocs());
+        }
+
+        for (int id = 1000; id < 1100; id+=10) {
+            System.out.println("document lenth for docid: " + id + " -> " + documentIndexLengthsInformation[id]);
+        }
+
         return documentIndexLengthsInformation;
     }
 

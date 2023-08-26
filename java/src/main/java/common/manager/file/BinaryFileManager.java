@@ -160,6 +160,7 @@ public class BinaryFileManager extends FileManager {
     }
 
     protected static final int    doubleBytes = Double.SIZE / Byte.SIZE;
+    protected static final int    intBytes    = Integer.SIZE / Byte.SIZE;
     protected static byte[] buffer = new byte[doubleBytes * 2000];
     /**
      * loads as many doubles as possible and stores them in outputArrayList
@@ -235,6 +236,36 @@ public class BinaryFileManager extends FileManager {
         return compressedData;
     }
 
+     /**
+     * loads as much integers as can fit in outputBuffer and stores them in outputBuffer
+     * @param outputBuffer
+     * @return the number of integer that were effectively read
+     * @throws EOFException
+     * @throws Exception
+     */
+    public int readUncompressedIntArray(int[] outputBuffer) throws IOError, Exception {
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readUncompressedIntArray");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readUncompressedIntArray on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            int numBytes = this.randomAccessFile.read(buffer, 0, Math.min(buffer.length, outputBuffer.length * intBytes));
+            int numIntegers = numBytes / intBytes;
+            for(int i=0; i < numIntegers; i++){
+                outputBuffer[i] = ByteBuffer.wrap(buffer, i*intBytes, intBytes).getInt();
+                
+            }
+            return numIntegers;
+
+        }catch (IOException e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
     public int[] readIntArray(int byteSize, long fileOffset, int howManyInt) throws Exception {
         if (this.mode != MODE.READ) {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform readIntArray");
@@ -254,10 +285,15 @@ public class BinaryFileManager extends FileManager {
             //                ((data[(i << 2) + 3] & 0xFF) << 0 );
             //}
             //return ret;
-            this.randomAccessFile.seek(fileOffset);
+            byte[] data = new byte[byteSize];
             int [] ret = new int[howManyInt];
-            for (int i = 0; i < ret.length; i++) {
-                ret[i] = this.randomAccessFile.readInt();
+
+            this.randomAccessFile.seek(fileOffset);
+            this.randomAccessFile.read(data);
+            
+            for (int i = 0; i < (data.length / Integer.SIZE); i++) {
+                 ret[i] = ByteBuffer.wrap(buffer, i*intBytes, intBytes).getInt();
+                //ret[i] = this.randomAccessFile.readInt();
             }
             return ret;
         }
