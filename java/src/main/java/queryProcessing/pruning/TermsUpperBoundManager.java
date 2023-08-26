@@ -99,7 +99,7 @@ public class TermsUpperBoundManager {
             double termUpperBound = -1;
             // for each term, we open its iterator
             PostingListIterator iterator = PostingListIteratorFactory.openIterator(vocabularyRecord);
-            System.out.print("\rProcessing term no\t" + index + "\t:\t" + vocabularyRecord.getTerm());
+            System.out.print("\rProcessing term no\t" + index );
             while (iterator.hasNext()) {
                 current = iterator.next();
                 termUpperBound = Math.max(termUpperBound, scoreFunction.documentWeight(vocabularyRecord, current) );

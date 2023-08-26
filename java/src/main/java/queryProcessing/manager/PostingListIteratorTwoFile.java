@@ -15,8 +15,10 @@ import java.util.Arrays;
 
 public class PostingListIteratorTwoFile implements PostingListIterator {
 
-    protected ArrayList<Integer> docIdsDecompressed = new ArrayList<>();
-    protected ArrayList<Integer> freqsDecompressed = new ArrayList<>();
+    protected static final int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
+
+    protected int[] docIdsDecompressed;
+    protected int[] freqsDecompressed ;
 
     protected int howManyRecords;
     protected int nextRecordIndex;
@@ -27,17 +29,18 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     protected Posting currentPosting;
 
+    protected ArrayList<SkipBlock> skipBlockArray = new ArrayList<>();
     protected int howManySkipBlocks;
     protected int firstSkipBlockOffset;
     protected SkipBlockBlockManager sbm;
+
+    protected static final boolean loadSkipBlocksInMemory = true;
 
     protected static String docIdsPath = ConfigLoader.getProperty("blocks.invertedindex.docIdFilePath") + ConfigLoader.getProperty("blocks.merged.invertedIndex.path");
     protected static String freqsPath = ConfigLoader.getProperty("blocks.invertedindex.freqFilePath") + ConfigLoader.getProperty("blocks.merged.invertedIndex.path");
     protected static String skipBlockPath = ConfigLoader.getProperty("blocks.merged.skipBlocks.path");
     protected BinaryFileManager docIdsBinaryFileManager;
     protected BinaryFileManager freqsBinaryFileManager;
-
-    protected static int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
 
     static final private boolean useCompression = ConfigLoader.getPropertyBool("invertedIndex.useCompression");
 
@@ -59,7 +62,18 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         try {
             this.sbm = new SkipBlockBlockManager(skipBlockPath, MODE.READ);
 
+            if(loadSkipBlocksInMemory){
+
+                for (int i = 0; i < this.howManySkipBlocks; i++) {
+                    SkipBlock sb = this.sbm.readRowAt(this.firstSkipBlockOffset + i * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
+                    this.skipBlockArray.add(sb);
+                }
+
+            }
+
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
@@ -75,7 +89,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             return null;
         }
 
-        if(nextRecordIndex % skipBlockMaxLen == 0) {
+        if(nextRecordIndex % skipBlockMaxLen == 0) {    // || nextRecordIndexInBlock == docIdsDecompressed.length
             // load current skipblock
             if(currentSkipBlockIndex >= this.howManySkipBlocks){
                 // if the skip block is finished and I have to load another skip block but I have read all the skip blocks, the iterator is finished
@@ -90,11 +104,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             try {
                 this.nextRecordIndexInBlock = 0;
 
-                docIdsDecompressed.clear();
-                freqsDecompressed.clear();
-
-                docIdsDecompressed.addAll( Arrays.stream(docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings())).boxed().toList() );
-                freqsDecompressed.addAll( Arrays.stream(freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings())).boxed().toList() ) ;
+                docIdsDecompressed = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());
+                freqsDecompressed  = freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings()   );
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -102,8 +113,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
 
 
-        int docId = docIdsDecompressed.get(nextRecordIndexInBlock);
-        int freq = freqsDecompressed.get(nextRecordIndexInBlock);
+        int docId = docIdsDecompressed[nextRecordIndexInBlock];
+        int freq = freqsDecompressed[nextRecordIndexInBlock];
 
         this.nextRecordIndexInBlock += 1;
         this.nextRecordIndex += 1;
@@ -150,11 +161,9 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 this.nextRecordIndexInBlock = 0;
                 this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen;
 
-                docIdsDecompressed.clear();
-                freqsDecompressed.clear();
-
-                docIdsDecompressed.addAll( Arrays.stream(docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings())).boxed().toList() );
-                freqsDecompressed.addAll( Arrays.stream(freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings())).boxed().toList() ) ;
+                docIdsDecompressed = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());
+                freqsDecompressed  = freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings()   );
+                
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -169,7 +178,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         int middle = lowerBound + ((upperBound - lowerBound) / 2);
 
-        int middleDocId = docIdsDecompressed.get(middle);
+        int middleDocId = docIdsDecompressed[middle];
 
         while(lowerBound != upperBound){
 
@@ -178,9 +187,9 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 if(middle == lowerBound){
                     nextRecordIndexInBlock = upperBound;
                     this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
-                    int docuId = docIdsDecompressed.get(nextRecordIndexInBlock);
-                    int freq = freqsDecompressed.get(nextRecordIndexInBlock);
-                    return this.currentPosting = new Posting(docuId, freq); //TO CHECK
+                    int docuId = docIdsDecompressed[nextRecordIndexInBlock];
+                    int freq = freqsDecompressed[nextRecordIndexInBlock];
+                    return this.currentPosting = new Posting(docuId, freq);
                 }
 
                 lowerBound = middle;
@@ -189,23 +198,23 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             }else if(middleDocId == docId){
                 nextRecordIndexInBlock = middle;
                 this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
-                int docuId = docIdsDecompressed.get(nextRecordIndexInBlock);
-                int freq = freqsDecompressed.get(nextRecordIndexInBlock);
+                int docuId = docIdsDecompressed[nextRecordIndexInBlock];
+                int freq = freqsDecompressed[nextRecordIndexInBlock];
                 return this.currentPosting = new Posting(docuId, freq);
             }else{
                 // when we have middlePosting.getDocid() > docId
                 upperBound = middle;
                 middle = lowerBound + ((upperBound - lowerBound) / 2);
             }
-            middleDocId = docIdsDecompressed.get(middle);
+            middleDocId = docIdsDecompressed[middle];
         }
 
 
         if(middleDocId >= docId){
             nextRecordIndexInBlock = middle;
             this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
-            int docuId = docIdsDecompressed.get(nextRecordIndexInBlock);
-            int freq = freqsDecompressed.get(nextRecordIndexInBlock);
+            int docuId = docIdsDecompressed[nextRecordIndexInBlock];
+            int freq = freqsDecompressed[nextRecordIndexInBlock];
             return this.currentPosting = new Posting(docuId, freq);
         }else{
             this.nextRecordIndexInBlock = sb.getHowManyPostings();
@@ -236,12 +245,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             //System.out.println("[getSkipBlockAt]: returning null, given index: " + index + " howManySkipBlocks: " + this.howManySkipBlocks);
             return null;
         }
-        try {
-            return this.sbm.readRowAt(this.firstSkipBlockOffset + index * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
-        } catch (Exception e) {
-            System.out.println("getSkipBlock cannot read skipBlock row");
-            e.printStackTrace();
-            return null;
+        if(loadSkipBlocksInMemory){
+            return this.skipBlockArray.get(index);
+        }
+        else{
+            try {
+                return this.sbm.readRowAt(this.firstSkipBlockOffset + index * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
+            } catch (Exception e) {
+                System.out.println("getSkipBlock cannot read skipBlock row");
+                e.printStackTrace();
+                return null;
+            }
         }
     }
     private boolean hasNextSkipBlock(){
