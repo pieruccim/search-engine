@@ -43,6 +43,8 @@ public class DAAT extends DocumentProcessor {
             
             
             int prevMin = Integer.MAX_VALUE;
+
+            double minScore = -1;
             while (true) {
                 int minDocId = Integer.MAX_VALUE;
                 
@@ -50,7 +52,7 @@ public class DAAT extends DocumentProcessor {
 
                 // find the min docID between the current PostingListIterators
                 for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairs) {
-                    VocabularyFileRecord vf = pair.getKey();
+                    //VocabularyFileRecord vf = pair.getKey();
                     PostingListIterator iterator = pair.getValue();//iterators.get(term.getTerm());
                     if (iterator.hasNext()) {
                         allListsProcessed = false;
@@ -79,19 +81,23 @@ public class DAAT extends DocumentProcessor {
                 double score = computeDocumentScore(termIteratorPairs, minDocId, scoringFunction);
 
                 // update the min heap with the current document score
-                DocumentScore tmp = new DocumentScore(minDocId, score);
-                priorityQueue.add(tmp);
-                //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
-                if (priorityQueue.size() > k) {
-                    //removes from bottom
-                    tmp = priorityQueue.pollLast();
-                    //System.out.println("Removed the documentscore: " + tmp.toString());
+                if(score > minScore){
+                    DocumentScore tmp = new DocumentScore(minDocId, score);
+                    priorityQueue.add(tmp);
+                    //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
+                    if (priorityQueue.size() > k) {
+                        //removes from bottom
+                        tmp = priorityQueue.pollLast();
+                        minScore = tmp.getScore();//Math.min(minScore, tmp.getScore());
+                        //System.out.println("Removed the documentscore: " + tmp.toString());
+                    }
                 }
                 prevMin = minDocId;
             }
         } else if(queryType == QueryType.CONJUNCTIVE){
             // DAAT algorithm conjunctive
             int maxDocId = 0;
+            double minScore = -1;
             while (true){
 
                 boolean finished = true;
@@ -149,14 +155,17 @@ public class DAAT extends DocumentProcessor {
                 // compute the document score for the current document ID
                 double score = computeDocumentScore(termIteratorPairs, maxDocId, scoringFunction);
 
-                // update the max heap with the current document score
-                DocumentScore tmp = new DocumentScore(maxDocId, score);
-                priorityQueue.add(tmp);
-                //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
-                if (priorityQueue.size() > k) {
-                    //removes from bottom
-                    tmp = priorityQueue.pollLast();
-                    //System.out.println("Removed the documentscore: " + tmp.toString());
+                if(score > minScore){
+                    // update the max heap with the current document score
+                    DocumentScore tmp = new DocumentScore(maxDocId, score);
+                    priorityQueue.add(tmp);
+                    //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
+                    if (priorityQueue.size() > k) {
+                        //removes from bottom
+                        tmp = priorityQueue.pollLast();
+                        minScore = tmp.getScore();
+                        //System.out.println("Removed the documentscore: " + tmp.toString());
+                    }
                 }
 
             }
