@@ -27,9 +27,12 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     protected Posting currentPosting;
 
+    protected ArrayList<SkipBlock> skipBlockArray = new ArrayList<>();
     protected int howManySkipBlocks;
     protected int firstSkipBlockOffset;
     protected SkipBlockBlockManager sbm;
+
+    protected static final boolean loadSkipBlocksInMemory = true;
 
     protected static String docIdsPath = ConfigLoader.getProperty("blocks.invertedindex.docIdFilePath") + ConfigLoader.getProperty("blocks.merged.invertedIndex.path");
     protected static String freqsPath = ConfigLoader.getProperty("blocks.invertedindex.freqFilePath") + ConfigLoader.getProperty("blocks.merged.invertedIndex.path");
@@ -59,7 +62,18 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         try {
             this.sbm = new SkipBlockBlockManager(skipBlockPath, MODE.READ);
 
+            if(loadSkipBlocksInMemory){
+
+                for (int i = 0; i < this.howManySkipBlocks; i++) {
+                    SkipBlock sb = this.sbm.readRowAt(this.firstSkipBlockOffset + i * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
+                    this.skipBlockArray.add(sb);
+                }
+
+            }
+
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
@@ -236,12 +250,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             //System.out.println("[getSkipBlockAt]: returning null, given index: " + index + " howManySkipBlocks: " + this.howManySkipBlocks);
             return null;
         }
-        try {
-            return this.sbm.readRowAt(this.firstSkipBlockOffset + index * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
-        } catch (Exception e) {
-            System.out.println("getSkipBlock cannot read skipBlock row");
-            e.printStackTrace();
-            return null;
+        if(loadSkipBlocksInMemory){
+            return this.skipBlockArray.get(index);
+        }
+        else{
+            try {
+                return this.sbm.readRowAt(this.firstSkipBlockOffset + index * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
+            } catch (Exception e) {
+                System.out.println("getSkipBlock cannot read skipBlock row");
+                e.printStackTrace();
+                return null;
+            }
         }
     }
     private boolean hasNextSkipBlock(){
