@@ -3,11 +3,13 @@ package common.manager.file;
 import common.manager.file.compression.Compressor;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class BinaryFileManager extends FileManager {
@@ -149,6 +151,41 @@ public class BinaryFileManager extends FileManager {
         }
         try {
             return this.randomAccessFile.readDouble();
+        }catch(EOFException e){
+            throw e; // in case of EOFException, it is thrown directly
+        }catch (IOException e) {
+            e.printStackTrace();
+            throw new Exception("Error reading double from the binary file");
+        }
+    }
+
+    protected static final int    doubleBytes = Double.SIZE / Byte.SIZE;
+    protected static byte[] buffer = new byte[doubleBytes * 2000];
+    /**
+     * loads as many doubles as possible and stores them in outputArrayList
+     * @param outputArrayList
+     * @return the number of double that were read
+     * @throws EOFException
+     * @throws Exception
+     */
+    public int readDoubleArray(ArrayList<Double> outputArrayList) throws EOFException, Exception {
+        if (this.mode != MODE.READ) {
+            throw new Exception("Binary file manager not in MODE.READ\tCannot perform readDouble");
+        }
+        if(this.compressor != null){
+            throw new Exception("Cannot invoke readDouble on a file opened with a compressor! Current compressor: "
+             + this.compressor.getClass().getName() + " | file: " + this.filePath);
+        }
+        try {
+            int numBytes = this.randomAccessFile.read(buffer);
+            int numDoubles = numBytes / doubleBytes;
+            for(int i=0; i < numDoubles; i++){
+                //outputBuffer[offset + i] = ByteBuffer.wrap(buffer, i*doubleBytes, doubleBytes).getDouble();
+                outputArrayList.add( ByteBuffer.wrap(buffer, i*doubleBytes, doubleBytes).getDouble() );
+                
+            }
+            return numDoubles;
+
         }catch(EOFException e){
             throw e; // in case of EOFException, it is thrown directly
         }catch (IOException e) {

@@ -157,16 +157,17 @@ public class TermsUpperBoundManager {
         }
         binaryFileManager = new BinaryFileManager(inputFilePath, MODE.READ);
 
-        double value;
+        int doublesRead = -1;
+        //double value;
 
-        while(true){
+        while(doublesRead != 0){
             try {
-                value = binaryFileManager.readDouble();
-                ret.add(value);
+                doublesRead = binaryFileManager.readDoubleArray(ret);
+                //value = binaryFileManager.readDouble();
+                //ret.add(value);
             } catch (EOFException e) {
                 break;
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
