@@ -12,6 +12,8 @@ import java.util.*;
 
 public class DAAT extends DocumentProcessor {
 
+    private static TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
+
     /**
      * @param queryTerms
      * @param queryType
@@ -21,8 +23,7 @@ public class DAAT extends DocumentProcessor {
     @Override
     public List<DocumentProcessor.DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryType queryType, int k) {
 
-
-        TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
+        priorityQueue.clear();
 
         // create a map to store PostingListIterators for each query term
         //Map<String, PostingListIterator> iterators = new HashMap<>();
