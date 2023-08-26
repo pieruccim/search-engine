@@ -209,7 +209,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         //startingIndex += SplittedInvertedIndexBlockManager.skipBlockMaxLength;
         //docIdOffset += docIdWrittenBytes;
         //freqOffset  += freqWrittenBytes;
-
+        
         return ret;
     }
     
