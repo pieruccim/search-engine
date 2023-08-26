@@ -2,16 +2,13 @@ package queryProcessing;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
 import common.bean.VocabularyFileRecordUB;
 import queryProcessing.QueryProcessor.QueryType;
-import queryProcessing.QueryProcessor.ScoringFunction;
 import queryProcessing.manager.PostingListIterator;
 import queryProcessing.manager.PostingListIteratorFactory;
 import queryProcessing.scoring.ScoreFunction;
@@ -35,26 +32,33 @@ public class MaxScore extends DocumentProcessor{
 
         }
 
+    protected static TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
+    protected static final Comparator<? super VocabularyFileRecordUB> comparatorUB = Comparator.comparing(VocabularyFileRecordUB::getUpperBound);
+    
+    List<VocabularyFileRecordUB> qTNonEssential = new ArrayList<VocabularyFileRecordUB>();
+    private static List<VocabularyFileRecordUB> qTEssential = new ArrayList<VocabularyFileRecordUB>();
+    // we will also load the posting lists iterators
+    private static List<PostingListIterator> allIterators = new ArrayList<PostingListIterator>();
+    private static List<PostingListIterator> essentialIterators    = new ArrayList<PostingListIterator>();
+    private static List<PostingListIterator> nonEssentialIterators = new ArrayList<PostingListIterator>();
     /**
      * this method must receive a List of VocabularyFileRecordUB, so that it can access to the upperbound information for each query term
      */
     public List<DocumentScore> scoreDocumentsUB(List<VocabularyFileRecordUB> qT, ScoreFunction scoringFunction,
             QueryType queryType, int k) {
 
-
-        TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
+        priorityQueue.clear();
         
         // here we have to split the posting lists between the essential and the non-essential ones
 
-        qT.sort(Comparator.comparing(VocabularyFileRecordUB::getUpperBound));
+        qT.sort(comparatorUB);
 
-        List<VocabularyFileRecordUB> qTNonEssential = new ArrayList<VocabularyFileRecordUB>();
-        List<VocabularyFileRecordUB> qTEssential = new ArrayList<VocabularyFileRecordUB>();
+        qTEssential.clear();
+        qTNonEssential.clear();
 
-        // we will also load the posting lists iterators
-        List<PostingListIterator> allIterators = new ArrayList<PostingListIterator>();
-        List<PostingListIterator> essentialIterators    = new ArrayList<PostingListIterator>();
-        List<PostingListIterator> nonEssentialIterators = new ArrayList<PostingListIterator>();
+        allIterators.clear();
+        essentialIterators.clear();
+        nonEssentialIterators.clear();
 
         double sum = 0;
         double nonEssentialTermUpperBound = 0;
@@ -65,7 +69,7 @@ public class MaxScore extends DocumentProcessor{
             if(sum < threshold){
                 qTNonEssential.add(qT.get(i));
                 nonEssentialIterators.add(PostingListIteratorFactory.openIterator(qT.get(i)));
-                nonEssentialTermUpperBound += qT.get(i).getUpperBound();
+                nonEssentialTermUpperBound = sum;//+= qT.get(i).getUpperBound();
             }else{
                 qTEssential.add(qT.get(i));
                 essentialIterators.add(PostingListIteratorFactory.openIterator(qT.get(i)));
@@ -80,6 +84,7 @@ public class MaxScore extends DocumentProcessor{
 
         // we need to obtain the lowest docID's score among the docIDs that are present in the essential posting lists
         int currentDocId = -1;
+        double minScoreThreshold = -1;
 
         double currentPartialScore;
 
@@ -147,13 +152,16 @@ public class MaxScore extends DocumentProcessor{
 
             // if we arrive here, we have the effective document score inside currentUpperBound and the docId inside currentDocId
             // uadd the current document score
-            DocumentScore tmp = new DocumentScore(currentDocId, currentUpperBound);
-            priorityQueue.add(tmp);
-            //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
-            if (priorityQueue.size() > k) {
-                //removes from bottom
-                tmp = priorityQueue.pollLast();
-                //System.out.println("Removed the documentscore: " + tmp.toString());
+            if(currentUpperBound > minScoreThreshold){
+                DocumentScore tmp = new DocumentScore(currentDocId, currentUpperBound);
+                priorityQueue.add(tmp);
+                //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
+                if (priorityQueue.size() > k) {
+                    //removes from bottom
+                    tmp = priorityQueue.pollLast();
+                    minScoreThreshold = tmp.getScore();
+                    //System.out.println("Removed the documentscore: " + tmp.toString());
+                }
             }
             
         }
@@ -166,10 +174,7 @@ public class MaxScore extends DocumentProcessor{
         }
 
         // close all iterators
-        for (PostingListIterator iterator : nonEssentialIterators) {
-            iterator.closeList();
-        }
-        for (PostingListIterator iterator : essentialIterators) {
+        for (PostingListIterator iterator : allIterators) {
             iterator.closeList();
         }
 
