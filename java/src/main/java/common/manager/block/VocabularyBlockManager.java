@@ -49,8 +49,6 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
             return null;
         }
         String[] arrayString = line.split(" ");
-
-        // TODO: assert arrayString.length() == 5
         
         return new VocabularyFileRecord(arrayString[0], Integer.parseInt(arrayString[1]), Integer.parseInt(arrayString[2]), Integer.parseInt(arrayString[3]), Integer.parseInt(arrayString[4]));
     }

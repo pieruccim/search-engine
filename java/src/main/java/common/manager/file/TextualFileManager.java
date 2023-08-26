@@ -111,7 +111,6 @@ public class TextualFileManager extends FileManager{
         }
         }else{  //  if(this.mode == MODE.WRITE)
             try {
-                // TODO: check if there is overhead introduced by charset encoding
                 this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath)));
             } catch (Exception e) {
                 e.printStackTrace();

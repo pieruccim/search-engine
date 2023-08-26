@@ -91,7 +91,7 @@ public class DAAT extends DocumentProcessor {
                 boolean finished = true;
 
                 // move forward the PostingListIterators to the next posting with docId greater or equal to maxDocId
-                //TODO: conjunctive queries
+
                 HashMap<String, Integer> termDocIds = new HashMap<>();
                 while (true) {
 
