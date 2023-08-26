@@ -89,7 +89,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             return null;
         }
 
-        if(nextRecordIndex % skipBlockMaxLen == 0) {
+        if(nextRecordIndex % skipBlockMaxLen == 0) {    // || nextRecordIndexInBlock == docIdsDecompressed.length
             // load current skipblock
             if(currentSkipBlockIndex >= this.howManySkipBlocks){
                 // if the skip block is finished and I have to load another skip block but I have read all the skip blocks, the iterator is finished
