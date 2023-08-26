@@ -141,8 +141,7 @@ public class QueryProcessor {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //DocumentIndexFileRecord documentIndexFileRecord = null;
-        
+       
         int [] documentIndexLengthsInformation = new int[this.getNumDocs()];
         int i = 0;
         int howMany = -1;
@@ -166,74 +165,16 @@ public class QueryProcessor {
     }
 
 
-    private int[] DEPRECATED(){
-        DocumentIndexBlockManager documentIndexBlockManager = null;
-        
-        try {
-            documentIndexBlockManager = DocumentIndexBlockManager.getMergedFileManager();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        DocumentIndexFileRecord documentIndexFileRecord = null;
-        
-        int [] documentIndexLengthsInformation = new int[this.getNumDocs()];
-        int i = 0;
-        try {
-            while(( documentIndexFileRecord = documentIndexBlockManager.readRow()) != null){
-                documentIndexLengthsInformation[i] = documentIndexFileRecord.getLen();
-                i+=1;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if(i != this.getNumDocs()){
-            System.out.println("[loadDocumentIndexLengthInformation] DEBUG: i: " + i + " \t numDocs: " + this.getNumDocs());
-        }
-
-        
-        for (int id = 1000; id < 1100; id+=10) {
-            System.out.println("document lenth for docid: " + id + " -> " + documentIndexLengthsInformation[id]);
-        }
-
-        return documentIndexLengthsInformation;
-    }
-
-    private int[] VERY_DEPRECATED(){
-        DocumentIndexBlockManager documentIndexBlockManager = null;
-        
-        try {
-            documentIndexBlockManager = DocumentIndexBlockManager.getMergedFileManager();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        DocumentIndexFileRecord documentIndexFileRecord = null;
-        
-        int [] documentIndexLengthsInformation = new int[this.getNumDocs()];
-        int i = 0;
-        try {
-            while(( documentIndexFileRecord = documentIndexBlockManager.readRow()) != null){
-                documentIndexLengthsInformation[i] = documentIndexFileRecord.getLen();
-                i+=1;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if(i != this.getNumDocs()){
-            System.out.println("[loadDocumentIndexLengthInformation] DEBUG: i: " + i + " \t numDocs: " + this.getNumDocs());
-        }
-
-        for (int id = 1000; id < 1100; id+=10) {
-            System.out.println("document lenth for docid: " + id + " -> " + documentIndexLengthsInformation[id]);
-        }
-
-        return documentIndexLengthsInformation;
-    }
-
-    // it should return an hashmap<String, PostingListIterator> for each query term
     public List<DocumentScore> processQuery(String query){
+        return processQuery(query, 0);
+    }
+    // it should return an hashmap<String, PostingListIterator> for each query term
+    public List<DocumentScore> processQuery(String query, long begin_time){
 
         String[] queryTerms = Preprocessor.processText(query, false);
-
+        if(begin_time != 0){
+            System.out.println("elapsed time for query preprocessing: " + ( System.currentTimeMillis() - begin_time ) );
+        }
         if(documentProcessorType != DocumentProcessorType.MAXSCORE){
 
             ArrayList<VocabularyFileRecord> queryRecords = new ArrayList<VocabularyFileRecord>();
@@ -245,6 +186,10 @@ public class QueryProcessor {
                 queryRecords.add(vocabulary.get(term));
             }
 
+        if(begin_time != 0){
+            System.out.println("elapsed time until queryRecords generation: " + ( System.currentTimeMillis() - begin_time ) );
+        }
+
             return this.documentProcessor.scoreDocuments(queryRecords, this.scoreFunction, this.queryType, this.nResults);
         }else{
 
@@ -255,6 +200,10 @@ public class QueryProcessor {
                     continue;
                 }
                 queryRecords.add(vocabularyUB.get(term));
+            }
+
+            if(begin_time != 0){
+                System.out.println("elapsed time until queryRecords generation: " + ( System.currentTimeMillis() - begin_time ) );
             }
 
             return ((MaxScore) this.documentProcessor).scoreDocumentsUB(queryRecords, this.scoreFunction, this.queryType, this.nResults);

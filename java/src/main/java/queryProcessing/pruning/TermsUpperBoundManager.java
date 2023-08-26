@@ -191,14 +191,14 @@ public class TermsUpperBoundManager {
         
         int [] documentIndexLengthsInformation = new int[collectionStatistics.getTotalDocuments()];
         int i = 0;
-        try {
-            while(( documentIndexFileRecord = documentIndexBlockManager.readRow()) != null){
-                documentIndexLengthsInformation[i] = documentIndexFileRecord.getLen();
-                i+=1;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        
+        int howMany = -1;
+        
+        while (howMany != 0) {
+            howMany = documentIndexBlockManager.readDocumentLenghtsList(documentIndexLengthsInformation, i);
+            i += howMany;
         }
+        
         if(i != collectionStatistics.getTotalDocuments()){
             System.out.println("[loadDocumentIndexLengthInformation] DEBUG: i: " + i + " \t numDocs: " + collectionStatistics.getTotalDocuments());
         }
