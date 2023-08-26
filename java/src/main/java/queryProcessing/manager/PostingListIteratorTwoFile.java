@@ -29,7 +29,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     protected Posting currentPosting;
 
-    protected ArrayList<SkipBlock> skipBlockArray = new ArrayList<>();
+    protected SkipBlock[] skipBlockArray;
     protected int howManySkipBlocks;
     protected int firstSkipBlockOffset;
     protected SkipBlockBlockManager sbm;
@@ -64,9 +64,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
             if(loadSkipBlocksInMemory){
 
+                this.skipBlockArray = new SkipBlock[this.howManySkipBlocks];
+
                 for (int i = 0; i < this.howManySkipBlocks; i++) {
                     SkipBlock sb = this.sbm.readRowAt(this.firstSkipBlockOffset + i * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
-                    this.skipBlockArray.add(sb);
+                    this.skipBlockArray[i] = sb;
                 }
 
             }
@@ -246,7 +248,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             return null;
         }
         if(loadSkipBlocksInMemory){
-            return this.skipBlockArray.get(index);
+            return this.skipBlockArray[index];
         }
         else{
             try {
