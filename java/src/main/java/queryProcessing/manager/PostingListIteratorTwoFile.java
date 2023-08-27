@@ -290,12 +290,14 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     /**
      * resets the iterator to the first element of the ids and freqs of the posting list
      */
-    protected void reset(){
+    @Override
+    public void reset(){
 
         this.currentSkipBlockIndex = 0;
         this.nextRecordIndex = 0;
         this.nextRecordIndexInBlock = 0;
         this.currentPosting = null;
+        this.future = null;
     }
 
     @Override

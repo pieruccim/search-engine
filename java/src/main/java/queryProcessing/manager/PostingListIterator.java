@@ -34,7 +34,10 @@ public interface PostingListIterator extends Iterator<Posting>{
      * @return Posting the first posting list whose docId is >= to the given one, if no Posting is found, returns null
      */
     public Posting nextGEQ(long docId);
-
+    /**
+     * rewinds the iterator to the beggining of the posting list
+     */
+    public void reset();
     /**
      * 
      */

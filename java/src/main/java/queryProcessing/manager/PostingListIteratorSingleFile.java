@@ -35,7 +35,8 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
     /**
      * resets the iterator to the first element of the posting list
      */
-    protected void reset(){
+    @Override
+    public void reset(){
         try {
             binaryFileManager.seek(startingOffset);
         } catch (IOException e) {

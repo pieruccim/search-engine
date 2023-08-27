@@ -132,9 +132,10 @@ public class TrecEvalBenchmarksMain {
 
             c += 1;
 
-            /*if (c == 100) {
+            if (c == 1000) {
+                System.out.println();
                 break;
-            }*/
+            }
         }
 
         double averageTime = sumQueryProcessingTimes / queryProcessingTimes.size();
@@ -142,7 +143,7 @@ public class TrecEvalBenchmarksMain {
 
         teb.closeResultFileManager();
         PostingListIteratorFactory.close();
-        System.out.println("Done saving queries scores");
+        System.out.println("Done saving queries scores\t\t");
         System.out.println("Average query time: " + String.format("%.2f", averageTime) + "ms ± " + String.format("%.1f", stdDeviation));
     }
 

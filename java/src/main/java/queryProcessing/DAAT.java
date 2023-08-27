@@ -126,7 +126,7 @@ public class DAAT extends DocumentProcessor {
                                 break;
                             }
                             int docId = nextPosting.getDocid();
-                            //System.out.println("docId returned: " + docId + "\t given maxDocId: " + maxDocId);
+                            System.out.println("Term: " + term.getTerm() + "\tdocId returned: " + docId + "\t given maxDocId: " + maxDocId);
                             termDocIds.put(term.getTerm(), docId);
                             maxDocId = Math.max(docId, maxDocId);
                         }
@@ -179,9 +179,9 @@ public class DAAT extends DocumentProcessor {
         }
 
         // close all iterators
-        for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairs) {
-            pair.getValue().closeList();
-        }
+        //for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairs) {
+        //    pair.getValue().closeList();
+        //}
 
         return bestKdocs;
     }
