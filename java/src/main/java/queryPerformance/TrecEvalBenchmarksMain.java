@@ -7,6 +7,7 @@ import queryProcessing.QueryProcessor;
 import queryProcessing.QueryProcessor.*;
 import queryProcessing.manager.PostingListIteratorFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TrecEvalBenchmarksMain {
@@ -105,8 +106,8 @@ public class TrecEvalBenchmarksMain {
         //process queries from the tsv trec_eval file
         List<Pair<Integer, String>> queries = teb.readQueries();
         teb.closeQueriesFileManager();
-        
-        double sumQueryProcessingTimes = 0; 
+
+        double sumQueryProcessingTimes = 0;
         List<Double> queryProcessingTimes = new ArrayList<>();
 
         int c = 1;
@@ -130,19 +131,10 @@ public class TrecEvalBenchmarksMain {
             }
 
             c += 1;
-            if (c == 100) {
-                teb.closeQueriesFileManager();
-                teb.closeResultFileManager();
-                PostingListIteratorFactory.close();
-                System.out.println("Done saving queries scores");
-                System.out.println("Average query time: " + String.format("%.2f", sumQueryProcessingTimes/c) + "ms ± " + String.format("%.1f", Math.sqrt(sumSquaredDifferences / c)));
-                System.exit(0);
-            }
-=======
+
             /*if (c == 100) {
                 break;
             }*/
->>>>>>> 177b36bd9d897d9d14006449233a0dcc4127ffd9
         }
 
         double averageTime = sumQueryProcessingTimes / queryProcessingTimes.size();
