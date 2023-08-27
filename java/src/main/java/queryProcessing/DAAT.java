@@ -126,7 +126,10 @@ public class DAAT extends DocumentProcessor {
                                 break;
                             }
                             int docId = nextPosting.getDocid();
-                            System.out.println("Term: " + term.getTerm() + "\tdocId returned: " + docId + "\t given maxDocId: " + maxDocId);
+                            
+                            if(docId < maxDocId)
+                                System.out.println("Term: " + term.getTerm() + "\tdocId returned: " + docId + "\t given maxDocId: " + maxDocId);
+                            
                             termDocIds.put(term.getTerm(), docId);
                             maxDocId = Math.max(docId, maxDocId);
                         }
