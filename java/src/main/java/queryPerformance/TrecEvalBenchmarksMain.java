@@ -107,7 +107,7 @@ public class TrecEvalBenchmarksMain {
         teb.closeQueriesFileManager();
         
         double sumQueryProcessingTimes = 0; 
-        double sumSquaredDifferences = 0;
+        List<Double> queryProcessingTimes = new ArrayList<>();
 
         int c = 1;
         for (Pair<Integer, String> queryPair : queries) {
@@ -116,19 +116,18 @@ public class TrecEvalBenchmarksMain {
             int queryId = queryPair.getKey();
             String queryText = queryPair.getValue();
 
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             List<DocumentScore> results = queryProcessor.processQuery(queryText);
-            long end = System.currentTimeMillis();
-            long elapsed = end - start;
+            long end = System.nanoTime();
+            double elapsed = (end - start) / 1000000;
             sumQueryProcessingTimes += elapsed;
-            sumSquaredDifferences += (elapsed - (sumQueryProcessingTimes / c)) * (elapsed - (sumQueryProcessingTimes / c));
+            queryProcessingTimes.add(elapsed);
 
-            if(results.size()>0){
+            if (results.size() > 0) {
                 teb.storeTrecEvalResult(queryId, results);
-            }else{
+            } else {
                 System.out.println("No relevant docs found for query " + c);
             }
-
 
             c += 1;
             if (c == 100) {
@@ -139,11 +138,28 @@ public class TrecEvalBenchmarksMain {
                 System.out.println("Average query time: " + String.format("%.2f", sumQueryProcessingTimes/c) + "ms ± " + String.format("%.1f", Math.sqrt(sumSquaredDifferences / c)));
                 System.exit(0);
             }
+=======
+            /*if (c == 100) {
+                break;
+            }*/
+>>>>>>> 177b36bd9d897d9d14006449233a0dcc4127ffd9
         }
+
+        double averageTime = sumQueryProcessingTimes / queryProcessingTimes.size();
+        double stdDeviation = computeStdDev(queryProcessingTimes, averageTime);
 
         teb.closeResultFileManager();
         PostingListIteratorFactory.close();
         System.out.println("Done saving queries scores");
-        System.out.println("Average query time: " + String.format("%.2f", sumQueryProcessingTimes/queries.size()) + "ms ± " + String.format("%.1f", Math.sqrt(sumSquaredDifferences / queries.size())));
+        System.out.println("Average query time: " + String.format("%.2f", averageTime) + "ms ± " + String.format("%.1f", stdDeviation));
+    }
+
+    public static double computeStdDev(List<Double> queryProcessingTimes, double averageTime) {
+        double sumSquaredDifferences = 0;
+        for (Double time : queryProcessingTimes) {
+            double difference = time - averageTime;
+            sumSquaredDifferences += difference * difference;
+        }
+        return Math.sqrt(sumSquaredDifferences / queryProcessingTimes.size());
     }
 }
