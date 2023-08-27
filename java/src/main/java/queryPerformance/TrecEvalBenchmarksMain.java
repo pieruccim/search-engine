@@ -5,6 +5,7 @@ import preprocessing.Preprocessor;
 import queryProcessing.DocumentProcessor.*;
 import queryProcessing.QueryProcessor;
 import queryProcessing.QueryProcessor.*;
+import queryProcessing.manager.PostingListIteratorFactory;
 
 import java.util.List;
 
@@ -130,16 +131,18 @@ public class TrecEvalBenchmarksMain {
 
 
             c += 1;
-            /*if (c == 1500) {
+            if (c == 100) {
                 teb.closeQueriesFileManager();
                 teb.closeResultFileManager();
+                PostingListIteratorFactory.close();
                 System.out.println("Done saving queries scores");
                 System.out.println("Average query time: " + String.format("%.2f", sumQueryProcessingTimes/c) + "ms ± " + String.format("%.1f", Math.sqrt(sumSquaredDifferences / c)));
                 System.exit(0);
-            }*/
+            }
         }
 
         teb.closeResultFileManager();
+        PostingListIteratorFactory.close();
         System.out.println("Done saving queries scores");
         System.out.println("Average query time: " + String.format("%.2f", sumQueryProcessingTimes/queries.size()) + "ms ± " + String.format("%.1f", Math.sqrt(sumSquaredDifferences / queries.size())));
     }

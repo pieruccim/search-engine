@@ -9,9 +9,10 @@ import common.manager.file.compression.UnaryCompressor;
 import config.ConfigLoader;
 
 import java.io.IOException;
-import java.io.ObjectInputFilter;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class PostingListIteratorTwoFile implements PostingListIterator {
 
@@ -19,6 +20,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     protected int[] docIdsDecompressed;
     protected int[] freqsDecompressed ;
+
+    private static final ExecutorService executor = Executors.newFixedThreadPool(10);
+    private int[] docIdsDecompressedNextBlock;
+    private int[] freqsDecompressedNextBlock ;
 
     protected int howManyRecords;
     protected int nextRecordIndex;
@@ -91,7 +96,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             return null;
         }
 
-        if(nextRecordIndex % skipBlockMaxLen == 0) {    // || nextRecordIndexInBlock == docIdsDecompressed.length
+        if(nextRecordIndex % skipBlockMaxLen == 0 ) {    // || nextRecordIndexInBlock == docIdsDecompressed.length
             // load current skipblock
             if(currentSkipBlockIndex >= this.howManySkipBlocks){
                 // if the skip block is finished and I have to load another skip block but I have read all the skip blocks, the iterator is finished
@@ -102,15 +107,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             }else{
                 currentSkipBlockIndex += 1;
             }
-            SkipBlock sb = this.getCurrentSkipBlock();
-            try {
-                this.nextRecordIndexInBlock = 0;
 
-                docIdsDecompressed = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());
-                freqsDecompressed  = freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings()   );
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            this.loadPostingListCurrentSkipBlock();
         }
 
 
@@ -122,6 +120,78 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         this.nextRecordIndex += 1;
 
         return this.currentPosting = new Posting(docId, freq);
+    }
+
+    private Future<Boolean> future;
+    /**
+     * resets nextRecordIndexInBlock to 0
+     * loads docIds and frequencies buffer for the current skip block
+     * @return false in case of error
+     */
+    private boolean loadPostingListCurrentSkipBlock(){
+        SkipBlock sb = this.getCurrentSkipBlock();
+
+        if(sb == null){
+            System.out.println("[loadPostingListCurrentSkipBlock] : trying to load non-existing block");
+            return false;
+        }
+
+        this.nextRecordIndexInBlock = 0;
+
+        boolean outcome = false;
+
+        try {
+
+            if (future != null && future.get() != null){
+                outcome = future.get();
+                if(outcome == true){
+                    this.docIdsDecompressed = this.docIdsDecompressedNextBlock;
+                    this.freqsDecompressed  = this.freqsDecompressedNextBlock;
+                    this.docIdsDecompressedNextBlock = null;
+                    this.freqsDecompressedNextBlock = null;
+                }
+}
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        if(outcome == false){
+
+            try {
+                docIdsDecompressed = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());
+                freqsDecompressed  = freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings()   );
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        }
+
+        if(this.hasNextSkipBlock()){
+
+
+                this.future = executor.submit(() -> {
+                    
+                    SkipBlock nextSB = this.getSkipBlockAt(currentSkipBlockIndex + 1);
+
+                    if(nextSB == null){
+                        return false;
+                    }
+
+                    try {
+                        docIdsDecompressedNextBlock = docIdsBinaryFileManager.readIntArray(nextSB.getDocIdByteSize(), nextSB.getDocIdFileOffset(), nextSB.getHowManyPostings());
+                        freqsDecompressedNextBlock  = freqsBinaryFileManager.readIntArray(nextSB.getFreqByteSize(), nextSB.getFreqFileOffset(), nextSB.getHowManyPostings()   );
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                    return true;
+                    
+                });
+
+        }
+
+        return true;
     }
 
     @Override
@@ -159,16 +229,9 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             }
 
-            try {
-                this.nextRecordIndexInBlock = 0;
-                this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen;
+            this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen;
 
-                docIdsDecompressed = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());
-                freqsDecompressed  = freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings()   );
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            this.loadPostingListCurrentSkipBlock();
         }
 
         //we can perform binary search to retrieve the first Posting GEQ
@@ -240,6 +303,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     public void closeList() {
         this.freqsBinaryFileManager.close();
         this.freqsBinaryFileManager.close();
+        if(this.future != null){
+            this.future.cancel(true);
+        }
+    }
+
+    /**
+     * you must call this method once before program termination
+     * once this method is called, you cannot perform any more queries
+     */
+    public static void shutdownThreads(){
+        executor.shutdown();
     }
 
     private SkipBlock getSkipBlockAt(int index){

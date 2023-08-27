@@ -7,6 +7,7 @@ import config.ConfigLoader;
 import queryProcessing.DocumentProcessor.*;
 import queryProcessing.QueryProcessor.QueryType;
 import queryProcessing.QueryProcessor.ScoringFunction;
+import queryProcessing.manager.PostingListIteratorFactory;
 import queryProcessing.QueryProcessor.DocumentProcessorType;
 
 public class QueryProcessorMain {
@@ -116,6 +117,7 @@ public class QueryProcessorMain {
                 System.out.println("docID: " + documentScore.getDocId() + " | score: " + documentScore.getScore());
             }
         }
+        PostingListIteratorFactory.close();
         sc.close();
     }
 }

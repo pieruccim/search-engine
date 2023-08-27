@@ -25,4 +25,13 @@ public class PostingListIteratorFactory {
         postingListIterator.openList(vocabularyFileRecord);
         return postingListIterator;
     }
+
+    /**
+     * 
+     */
+    public static void close(){
+        if(PostingListIteratorFactory.offsetType == OffsetType.TWO_FILES){
+            PostingListIteratorTwoFile.shutdownThreads();
+        }
+    }
 }
