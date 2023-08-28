@@ -30,15 +30,17 @@ public class DAAT extends DocumentProcessor {
 
         // create a map to store PostingListIterators for each query term
         //Map<String, PostingListIterator> iterators = new HashMap<>();
-
+        
 
         // initialize PostingListIterators for each query term, iterators will have inside the term
         // with the corresponding posting list to iterate over
-        for (VocabularyFileRecord term : queryTerms) {
-            PostingListIterator iterator = PostingListIteratorFactory.openIterator(term);
-            //iterators.put(term.getTerm(), iterator);
-            termIteratorPairs.add(new Pair<VocabularyFileRecord, PostingListIterator>(term, iterator));
-        }
+        
+        PostingListIteratorFactory.openIterators(queryTerms, termIteratorPairs);
+        //for (VocabularyFileRecord term : queryTerms) {
+        //    PostingListIterator iterator = PostingListIteratorFactory.openIterator(term);
+        //    //iterators.put(term.getTerm(), iterator);
+        //    termIteratorPairs.add(new Pair<VocabularyFileRecord, PostingListIterator>(term, iterator));
+        //}
 
         
         if(queryType == QueryType.DISJUNCTIVE) {
