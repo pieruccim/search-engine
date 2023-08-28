@@ -115,7 +115,7 @@ public class TermsUpperBoundManager {
             }
             index++;
         }
-        PostingListIteratorFactory.close();
+
         System.out.println();
     }
 
@@ -173,6 +173,15 @@ public class TermsUpperBoundManager {
             }
         }
         return ret;
+    }
+
+    /**
+     * this method should be called only once at the end of the program
+     * once called the iterator over the posting lists will not be accessible anymore
+     */
+    public static void close(){
+        System.out.println();
+        PostingListIteratorFactory.close();
     }
 
     /**

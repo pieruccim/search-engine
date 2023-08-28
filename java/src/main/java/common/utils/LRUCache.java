@@ -25,7 +25,11 @@ public class LRUCache<KeyType, ValueType> {
         this.onRemotionCallable = onRemotionCallable;
         this.map = new LinkedHashMap<>(16, 0.75f, true);
     }
-
+    /**
+     * Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
+     * @param key
+     * @return
+     */
     public ValueType get(KeyType key) {
         ValueType value = this.map.get(key);
         return value;
@@ -38,7 +42,8 @@ public class LRUCache<KeyType, ValueType> {
         ) {
             Iterator<Map.Entry<KeyType,ValueType>> it = this.map.entrySet().iterator();
             Entry<KeyType, ValueType> entry = it.next();
-            this.onRemotionCallable.apply(entry.getValue());
+            if(this.onRemotionCallable != null)
+                this.onRemotionCallable.apply(entry.getValue());
             it.remove();
         }
         this.map.put(key, value);

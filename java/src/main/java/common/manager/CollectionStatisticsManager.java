@@ -68,19 +68,24 @@ public class CollectionStatisticsManager {
 
     public CollectionStatistics readCollectionStatistics() throws IOException {
         this.openFile(MODE.READ);
+        CollectionStatistics ret = null;
         String line = this.textualFileManager.readLine();
         if (line != null) {
             String[] parts = line.split("\t");
             if (parts.length == 2) {
                 int totalDocuments = Integer.parseInt(parts[0]);
                 double averageDocumentLength = Double.parseDouble(parts[1]);
-                return new CollectionStatistics(totalDocuments, averageDocumentLength);
+                ret = new CollectionStatistics(totalDocuments, averageDocumentLength);
+            }else{
+                this.textualFileManager.close();
+                throw new IOException("Cannot read statistics");
             }
         }
 
         this.textualFileManager.close();
+        return ret;
 
-        throw new IOException("Cannot read statistics");
+        
         //return null if unable to read or parse collection statistics
         //return null;
     }

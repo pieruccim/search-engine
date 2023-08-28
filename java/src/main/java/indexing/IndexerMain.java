@@ -58,7 +58,8 @@ public class IndexerMain {
     public static void upperBoundOnly(String[] args){
         CollectionStatistics collectionStatistics;
         try {
-            collectionStatistics = (new CollectionStatisticsManager(ConfigLoader.getProperty("collectionStatistics.filePath"))).readCollectionStatistics();
+            CollectionStatisticsManager collectionStatisticsManager = new CollectionStatisticsManager(ConfigLoader.getProperty("collectionStatistics.filePath"));
+            collectionStatistics = collectionStatisticsManager.readCollectionStatistics();
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -85,5 +86,6 @@ public class IndexerMain {
 
             TermsUpperBoundManager.generateUpperBounds(collectionStatistics, scoringFunction);
         }
+        TermsUpperBoundManager.close();
     } 
 }
