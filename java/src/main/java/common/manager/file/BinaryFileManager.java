@@ -231,7 +231,16 @@ public class BinaryFileManager extends FileManager {
         }*/
 
         this.randomAccessFile.seek(fileOffset);
-        this.randomAccessFile.read(compressedData, 0, byteSize);
+        int howManyRead = 0;
+        while(howManyRead < byteSize){
+            int tmp = this.randomAccessFile.read(compressedData, 0, byteSize);
+            if(tmp == -1){
+                System.out.println("Attempt to read from file '" + this.filePath + "' while EOF reached" +
+                    " byte read: " + howManyRead + " byte requested: " + byteSize + " startingOffset: " + fileOffset);
+                break;
+            }
+            howManyRead += tmp;
+        }
 
         return compressedData;
     }
