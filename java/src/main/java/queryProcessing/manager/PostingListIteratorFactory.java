@@ -1,9 +1,17 @@
 package queryProcessing.manager;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import common.bean.VocabularyFileRecord;
 import common.manager.block.VocabularyBlockManager.OffsetType;
 import common.utils.LRUCache;
 import config.ConfigLoader;
+import javafx.util.Pair;
 
 
 
@@ -56,6 +64,50 @@ public class PostingListIteratorFactory {
         return postingListIterator;
     }
 
+    private static final int howManyThreads = 10;
+
+    private static ExecutorService executor = Executors.newFixedThreadPool(howManyThreads);
+
+    private static ArrayList<Pair<VocabularyFileRecord, Future<PostingListIterator>>> futureList = new ArrayList<Pair<VocabularyFileRecord, Future<PostingListIterator>>>();
+
+    /**
+     * opens all the iterators associated with the given vocabularyfilerecords in a concurrent way
+     * @param records
+     * @param retList the arraylist where the opened / retrieved iterators will be put
+     */
+    public static void openIterators(List<VocabularyFileRecord> records, ArrayList<Pair<VocabularyFileRecord, PostingListIterator>> retList){
+        
+        if(printedInfos == false){
+            printedInfos = printInfos();
+        }
+        
+        futureList.clear();
+
+        for (VocabularyFileRecord vocabularyFileRecord : records) {
+            futureList.add( new Pair<VocabularyFileRecord, Future<PostingListIterator>>(vocabularyFileRecord, executor.submit(() -> {return openIterator(vocabularyFileRecord);})));
+        }
+
+        for (Pair<VocabularyFileRecord, Future<PostingListIterator>> record : futureList) {
+            PostingListIterator pl;
+            try {
+				
+                pl = record.getValue().get();
+
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+                pl = null;
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+                pl = null;
+			}
+            if(pl == null){
+                System.out.println("Loading iterator in main thread for the term: " + record.getKey().getTerm());
+                pl = openIterator(record.getKey());
+            }
+            retList.add(new Pair<VocabularyFileRecord, PostingListIterator>(record.getKey(), pl));
+        }
+    }
+
     /**
      * 
      */
@@ -68,6 +120,9 @@ public class PostingListIteratorFactory {
             for( PostingListIterator posting : LRUcache.values()){
                 posting.closeList();
             }
+        }
+        if(executor != null){
+            executor.shutdown();
         }
 
     }
