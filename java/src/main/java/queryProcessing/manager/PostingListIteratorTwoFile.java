@@ -172,7 +172,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         @Override
         public Pair<int[], int[]> call(){
-            if(nextSB == null){
+            if(this.nextSB == null){
                 System.out.println("Called a thread passing a null parameter");
                 return null;
             }
@@ -181,16 +181,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             int [] freqsDecompressedNextBlock;
 
             try {
-                docIdsDecompressedNextBlock = threadDocIdsBinaryFileManager.readIntArray(nextSB.getDocIdByteSize(), nextSB.getDocIdFileOffset(), nextSB.getHowManyPostings());
-                freqsDecompressedNextBlock  = threadFreqsBinaryFileManager.readIntArray(nextSB.getFreqByteSize(), nextSB.getFreqFileOffset(), nextSB.getHowManyPostings()   );
+                docIdsDecompressedNextBlock = threadDocIdsBinaryFileManager.readIntArray(this.nextSB.getDocIdByteSize(), this.nextSB.getDocIdFileOffset(), this.nextSB.getHowManyPostings());
+                freqsDecompressedNextBlock  = threadFreqsBinaryFileManager.readIntArray(this.nextSB.getFreqByteSize(), this.nextSB.getFreqFileOffset(), this.nextSB.getHowManyPostings()   );
             } catch (Exception e) {
                 e.printStackTrace();
+                System.out.println("Exception in thread for term iterator: " + term);
                 return null;
             }
             Pair<int[], int[]> ret = new Pair<int[], int[]>(docIdsDecompressedNextBlock, freqsDecompressedNextBlock);
     
             if(useCache){
-                cache.put(nextSB, ret);
+                cache.put(this.nextSB, ret);
             }
             return ret;
         }
@@ -232,11 +233,15 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
+                System.out.println("Current term: " + term);
             }
         }
-
-
         if(outcome == null){
+
+            if(useThreads && this.future != null){
+                this.future.cancel(true);
+                this.loader = null;
+            }
 
             try {
                 int[] tmpDocIds     = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());    
@@ -248,15 +253,20 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                System.out.println("Current term: " + term);
                 return false;
             }
 
         }
 
         if(this.hasNextSkipBlock() && useThreads){
+                if(this.future != null){
+                    this.future.cancel(true);
+                    this.loader = null;
+                }
 
-                SkipBlock nextSB = this.getSkipBlockAt(currentSkipBlockIndex + 1);
-                this.loader = new LoadingPostingListBlock(nextSB);
+                SkipBlock nextBlock = this.getSkipBlockAt(currentSkipBlockIndex + 1);
+                this.loader = new LoadingPostingListBlock(nextBlock);
                 this.future = executor.submit(loader);
 
         }
