@@ -5,13 +5,18 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Semaphore;
 import java.util.function.Function;
+
+import config.ConfigLoader;
 
 
 public class LRUCache<KeyType, ValueType> {
 
     private int capacity;
     private LinkedHashMap<KeyType,ValueType> map;
+
+    private final static boolean debug = ConfigLoader.getPropertyBool("cache.class.debug");
 
     private Function<ValueType, Boolean> onRemotionCallable;
 
@@ -24,6 +29,7 @@ public class LRUCache<KeyType, ValueType> {
         this.capacity = capacity;
         this.onRemotionCallable = onRemotionCallable;
         this.map = new LinkedHashMap<>(16, 0.75f, true);
+        
     }
     /**
      * Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
@@ -35,16 +41,35 @@ public class LRUCache<KeyType, ValueType> {
         return value;
     }
 
+    private Semaphore mutex = new Semaphore(1);
+
+    private static final int THRESHOLD = 10;
+
     public void put(KeyType key, ValueType value) {
-        if (
-            !this.map.containsKey(key) &&
-            this.map.size() == this.capacity
-        ) {
-            Iterator<Map.Entry<KeyType,ValueType>> it = this.map.entrySet().iterator();
-            Entry<KeyType, ValueType> entry = it.next();
-            if(this.onRemotionCallable != null)
-                this.onRemotionCallable.apply(entry.getValue());
-            it.remove();
+        if ( !this.map.containsKey(key) && this.map.size() >= this.capacity + THRESHOLD){
+
+            if(mutex.tryAcquire()) {
+
+                Iterator<Map.Entry<KeyType,ValueType>> it = this.map.entrySet().iterator();
+                for (int i = 0; i < this.map.size() - this.capacity; i++) {
+                    
+                    Entry<KeyType, ValueType> entry = it.next();
+                    if(this.onRemotionCallable != null)
+                        this.onRemotionCallable.apply(entry.getValue());
+                    it.remove();
+                    if(debug) {
+                        System.out.println("removed key '"+ entry.getKey().toString() + "' from cache in order to add '" + key.toString() +"'");
+                        System.out.println("Was effectively removed? " + !this.map.containsKey(key));
+                        this.map.entrySet().iterator().forEachRemaining((Entry<KeyType, ValueType> f) -> {System.out.print(f.getKey().toString() + " ");});
+                        System.out.println();
+                    }
+
+                }
+                // should close the iterator?
+                it = null;
+                mutex.release();
+            }
+
         }
         this.map.put(key, value);
     }
