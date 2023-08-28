@@ -443,7 +443,7 @@ public class BinaryFileManager extends FileManager {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform seek");
         }
         this.randomAccessFile.seek(byteOffset);
-
+        
     }
 
     public long getCurrentPosition() throws IOException{

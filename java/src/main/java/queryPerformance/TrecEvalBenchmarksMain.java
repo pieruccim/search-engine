@@ -16,10 +16,11 @@ public class TrecEvalBenchmarksMain {
         //default parameters
         ScoringFunction scoringFunction = ScoringFunction.TFIDF;
         QueryType queryType = QueryType.DISJUNCTIVE;
-        DocumentProcessorType documentProcessorType = DocumentProcessorType.DAAT;
+        DocumentProcessorType documentProcessorType = DocumentProcessorType.MAXSCORE;
         int nResults = 10;
         boolean stopWordRemoval = true;
         boolean wordStemming = true;
+        int howManyQueries = 200;
 
         for (int i = 0; i < args.length; i++) {
             if(args[i].equals("--results") && (i+1) < args.length){
@@ -98,6 +99,16 @@ public class TrecEvalBenchmarksMain {
                 wordStemming = tmp;
                 i += 1;
             }
+            if(args[i].equals("--howMany") && (i+1) < args.length){
+                int tmp;
+                try {
+                    tmp = Integer.parseInt(args[i+1]);
+                } catch (IllegalArgumentException e) {
+                    continue;
+                }
+                howManyQueries = tmp;
+                i += 1;
+            }
         }
 
         QueryProcessor queryProcessor = new QueryProcessor(nResults, scoringFunction, queryType, documentProcessorType, stopWordRemoval, wordStemming);
@@ -127,12 +138,12 @@ public class TrecEvalBenchmarksMain {
             if (results.size() > 0) {
                 teb.storeTrecEvalResult(queryId, results);
             } else {
-                System.out.println("No relevant docs found for query " + c);
+                //System.out.println("No relevant docs found for query " + c + " / " + queries.size());
             }
 
             c += 1;
 
-            if (c == 1000) {
+            if (c == howManyQueries) {
                 System.out.println();
                 break;
             }

@@ -10,12 +10,27 @@ import config.ConfigLoader;
 public class PostingListIteratorFactory {
 
     protected static OffsetType offsetType = OffsetType.valueOf(ConfigLoader.getProperty("blocks.invertedindex.type"));
+    protected static final int cacheSize = ConfigLoader.getIntProperty("performance.iteratorFactory.cache.size");
+    protected static final boolean useCache = ConfigLoader.getPropertyBool("performance.iteratorFactory.cache.enabled");
 
-    private final static LRUCache<String, PostingListIterator> LRUcache = new LRUCache<String, PostingListIterator>(1000, (PostingListIterator p) -> {p.closeList(); return true;});
+    private final static LRUCache<String, PostingListIterator> LRUcache = new LRUCache<String, PostingListIterator>(cacheSize, (PostingListIterator p) -> {p.closeList(); return true;});
+
+    private static boolean printedInfos = false;
+
+    private static boolean printInfos(){
+        System.out.println("PostingListIteratorFactory use cache: " + ((useCache) ? (true + "\tcache size: " + cacheSize) : false ) );
+        System.out.println("PostingListIteratorTwoFile use threads: " + PostingListIteratorTwoFile.useThreads );
+        System.out.println("PostingListIteratorTwoFile use PostingListBlocks cache: " + ((PostingListIteratorTwoFile.useCache) ? (true + "\tcache size: " + PostingListIteratorTwoFile.cacheSize) : false ) );
+        return true;
+    }
 
     public static PostingListIterator openIterator(VocabularyFileRecord vocabularyFileRecord){
 
-        PostingListIterator postingListIterator = LRUcache.get(vocabularyFileRecord.getTerm());
+        if(printedInfos == false){
+            printedInfos = printInfos();
+        }
+
+        PostingListIterator postingListIterator = useCache ? LRUcache.get(vocabularyFileRecord.getTerm()) : null;
 
         if(postingListIterator != null){
             postingListIterator.reset();
@@ -35,7 +50,8 @@ public class PostingListIteratorFactory {
 
         postingListIterator.openList(vocabularyFileRecord);
 
-        LRUcache.put(vocabularyFileRecord.getTerm(), postingListIterator);
+        if(useCache)
+            LRUcache.put(vocabularyFileRecord.getTerm(), postingListIterator);
 
         return postingListIterator;
     }
@@ -48,8 +64,10 @@ public class PostingListIteratorFactory {
             PostingListIteratorTwoFile.shutdownThreads();
         }
 
-        for( PostingListIterator posting : LRUcache.values()){
-            posting.closeList();
+        if(useCache){
+            for( PostingListIterator posting : LRUcache.values()){
+                posting.closeList();
+            }
         }
 
     }

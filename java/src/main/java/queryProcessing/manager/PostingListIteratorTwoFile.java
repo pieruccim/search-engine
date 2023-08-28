@@ -20,13 +20,15 @@ import java.util.concurrent.Future;
 public class PostingListIteratorTwoFile implements PostingListIterator {
 
     protected static final int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
-    protected static final boolean useCache = true;
-    protected static final boolean useThreads = true;
+    public static final boolean useCache = ConfigLoader.getPropertyBool("performance.iterators.useCache");
+    public static final boolean useThreads = ConfigLoader.getPropertyBool("performance.iterators.useThreads");
+    public static final int howManyThreads = ConfigLoader.getIntProperty("performance.iterators.threads.howMany");
+    public static final int cacheSize = ConfigLoader.getIntProperty("performance.iterators.cache.size");
 
     protected int[] docIdsDecompressed;
     protected int[] freqsDecompressed ;
 
-    private static final ExecutorService executor = useThreads ? Executors.newFixedThreadPool(20) : null;
+    private static final ExecutorService executor = useThreads ? Executors.newFixedThreadPool(howManyThreads) : null;
 
     protected int howManyRecords;
     protected int nextRecordIndex;
@@ -40,6 +42,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     protected SkipBlock[] skipBlockArray;
     protected int howManySkipBlocks;
     protected int firstSkipBlockOffset;
+    protected String term;
     protected SkipBlockBlockManager sbm;
 
     protected static final boolean loadSkipBlocksInMemory = true;
@@ -50,21 +53,44 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     protected BinaryFileManager docIdsBinaryFileManager;
     protected BinaryFileManager freqsBinaryFileManager;
 
+    protected BinaryFileManager thDocIdsBinaryFileManager;
+    protected BinaryFileManager thFreqsBinaryFileManager;
+
     static final private boolean useCompression = ConfigLoader.getPropertyBool("invertedIndex.useCompression");
+
+    private BinaryFileManager createNewDocIdsFileManager(){
+        if(useCompression){
+            return new BinaryFileManager(docIdsPath, MODE.READ, new DeltaCompressor());
+        }else{
+            return new BinaryFileManager(docIdsPath, MODE.READ);
+        }
+    }
+
+    private BinaryFileManager createNewFreqsFileManager(){
+        if(useCompression){
+            return new BinaryFileManager(freqsPath, MODE.READ, new UnaryCompressor());
+        }else{
+            return new BinaryFileManager(freqsPath, MODE.READ);
+        }
+    }
 
     @Override
     public void openList(VocabularyFileRecord vocabularyFileRecord) {
-        if(useCompression){
-            this.docIdsBinaryFileManager = new BinaryFileManager(docIdsPath, MODE.READ, new DeltaCompressor());
-            this.freqsBinaryFileManager = new BinaryFileManager(freqsPath, MODE.READ, new UnaryCompressor());
-        }else{
-            this.docIdsBinaryFileManager = new BinaryFileManager(docIdsPath, MODE.READ);
-            this.freqsBinaryFileManager = new BinaryFileManager(freqsPath, MODE.READ);
+        //System.out.println("useCache: " + useCache + "useThreads: " + useThreads);
+
+        this.docIdsBinaryFileManager = this.createNewDocIdsFileManager();
+        this.freqsBinaryFileManager = this.createNewFreqsFileManager();
+
+        if(useThreads){
+            this.thDocIdsBinaryFileManager = this.createNewDocIdsFileManager();
+            this.thFreqsBinaryFileManager = this.createNewFreqsFileManager();
         }
+
         this.howManyRecords = vocabularyFileRecord.getDf();
 
         this.howManySkipBlocks = vocabularyFileRecord.getHowManySkipBlocks();
         this.firstSkipBlockOffset = vocabularyFileRecord.getOffset();
+        this.term = vocabularyFileRecord.getTerm();
 
 
         try {
@@ -101,13 +127,16 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         if(nextRecordIndex % skipBlockMaxLen == 0 ) {    // || nextRecordIndexInBlock == docIdsDecompressed.length
             // load current skipblock
-            if(currentSkipBlockIndex >= this.howManySkipBlocks){
-                // if the skip block is finished and I have to load another skip block but I have read all the skip blocks, the iterator is finished
-                return null;
-            }
+
             if(nextRecordIndex == 0){
+                // case in which I am reading the first posting of the first block
                 currentSkipBlockIndex = 0;
             }else{
+                if( ! hasNextSkipBlock()){
+                    // if the skip block is finished and I have to load another skip block 
+                    // but I have read all the skip blocks, the iterator is finished
+                    return null;
+                }
                 currentSkipBlockIndex += 1;
             }
 
@@ -125,17 +154,20 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         return this.currentPosting = new Posting(docId, freq);
     }
 
-    protected LRUCache<SkipBlock, Pair<int[], int[]>> cache = useCache ? new LRUCache<SkipBlock, Pair<int[], int[]>>(128, null) : null;
+    protected LRUCache<SkipBlock, Pair<int[], int[]>> cache = useCache ? new LRUCache<SkipBlock, Pair<int[], int[]>>(cacheSize, null) : null;
 
     public class LoadingPostingListBlock implements Callable<Pair<int[], int[]>> {
         protected SkipBlock nextSB;
-        BinaryFileManager docIdsBinaryFileManager;
-        BinaryFileManager freqsBinaryFileManager;
+        BinaryFileManager threadDocIdsBinaryFileManager;
+        BinaryFileManager threadFreqsBinaryFileManager;
 
-        public LoadingPostingListBlock(SkipBlock nextSB, BinaryFileManager docIdsBinaryFileManager, BinaryFileManager freqsBinaryFileManager) {
+        public LoadingPostingListBlock(SkipBlock nextSB) {
             this.nextSB = nextSB;
-            this.docIdsBinaryFileManager = docIdsBinaryFileManager;
-            this.freqsBinaryFileManager  = freqsBinaryFileManager;
+            if(threadDocIdsBinaryFileManager == null){
+                //System.out.println("creating binaryFileManagers for threads for term: '" + term + "'");
+                this.threadDocIdsBinaryFileManager = thDocIdsBinaryFileManager;
+                this.threadFreqsBinaryFileManager  = thFreqsBinaryFileManager;
+            }
         }
 
         @Override
@@ -149,17 +181,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             int [] freqsDecompressedNextBlock;
 
             try {
-                docIdsDecompressedNextBlock = docIdsBinaryFileManager.readIntArray(nextSB.getDocIdByteSize(), nextSB.getDocIdFileOffset(), nextSB.getHowManyPostings());
-                freqsDecompressedNextBlock  = freqsBinaryFileManager.readIntArray(nextSB.getFreqByteSize(), nextSB.getFreqFileOffset(), nextSB.getHowManyPostings()   );
+                docIdsDecompressedNextBlock = threadDocIdsBinaryFileManager.readIntArray(nextSB.getDocIdByteSize(), nextSB.getDocIdFileOffset(), nextSB.getHowManyPostings());
+                freqsDecompressedNextBlock  = threadFreqsBinaryFileManager.readIntArray(nextSB.getFreqByteSize(), nextSB.getFreqFileOffset(), nextSB.getHowManyPostings()   );
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
             }
             Pair<int[], int[]> ret = new Pair<int[], int[]>(docIdsDecompressedNextBlock, freqsDecompressedNextBlock);
     
-            if(useCache)
+            if(useCache){
                 cache.put(nextSB, ret);
-
+            }
             return ret;
         }
     }
@@ -183,15 +215,18 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         Pair<int[], int[]> outcome = (useCache) ? this.cache.get(sb) : null;
 
-        if(outcome == null && useThreads){
+        if(outcome != null){
+            this.docIdsDecompressed = outcome.getKey();
+            this.freqsDecompressed  = outcome.getValue();
+        }
+        else if(outcome == null && useThreads){
             try {
 
-                if (future != null && loader.nextSB == sb && future.get() != null){
-                    outcome = future.get();
-                    if(outcome != null){
-                        this.docIdsDecompressed = outcome.getKey();
-                        this.freqsDecompressed  = outcome.getValue();
-                    }
+                if (future != null && loader.nextSB.equals(sb) && (outcome = future.get()) != null){
+
+                    this.docIdsDecompressed = outcome.getKey();
+                    this.freqsDecompressed  = outcome.getValue();
+                    
                     future = null;
                     loader = null;
                 }
@@ -204,11 +239,12 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         if(outcome == null){
 
             try {
-                docIdsDecompressed = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());
-                freqsDecompressed  = freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings()   );
-
+                int[] tmpDocIds     = docIdsBinaryFileManager.readIntArray(sb.getDocIdByteSize(), sb.getDocIdFileOffset(), sb.getHowManyPostings());    
+                int[] tmpDocFreq    = freqsBinaryFileManager.readIntArray(sb.getFreqByteSize(), sb.getFreqFileOffset(), sb.getHowManyPostings());
+                docIdsDecompressed  = tmpDocIds;
+                freqsDecompressed   = tmpDocFreq;
                 if(useCache){
-                    this.cache.put(sb, new Pair<int[], int[]>(docIdsDecompressed, freqsDecompressed));
+                    this.cache.put(sb, new Pair<int[], int[]>(tmpDocIds, tmpDocFreq));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -220,7 +256,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         if(this.hasNextSkipBlock() && useThreads){
 
                 SkipBlock nextSB = this.getSkipBlockAt(currentSkipBlockIndex + 1);
-                this.loader = new LoadingPostingListBlock(nextSB, docIdsBinaryFileManager, freqsBinaryFileManager);
+                this.loader = new LoadingPostingListBlock(nextSB);
                 this.future = executor.submit(loader);
 
         }
@@ -258,7 +294,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                     currentSkipBlockIndex += 1;
                     sb = this.getCurrentSkipBlock();
                 }else{
-                    //the skip blocks are finished and I have not found a Posting whose docId is >= docId
+                    //the skip blocks are finished and I have not found a Posting whose docId is >= requested docId
                     this.nextRecordIndex = this.howManyRecords;
                     return null;
                 }
@@ -338,7 +374,18 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         this.nextRecordIndex = 0;
         this.nextRecordIndexInBlock = 0;
         this.currentPosting = null;
+        if(useThreads && this.future != null){
+            this.future.cancel(false);
+        }
         this.future = null;
+        //try{
+        //    this.docIdsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
+        //    this.freqsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
+        //}catch(IOException e){
+        //    e.printStackTrace();
+        //}catch(Exception e){
+        //    e.printStackTrace();
+        //}
     }
 
     @Override
