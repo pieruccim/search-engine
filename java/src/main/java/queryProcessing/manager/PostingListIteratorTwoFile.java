@@ -126,7 +126,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             return null;
         }
 
-        if(nextRecordIndex % skipBlockMaxLen == 0 ) {    // || nextRecordIndexInBlock == docIdsDecompressed.length
+        if(this.reachedBlockEnd()) {
             // load current skipblock
 
             if(nextRecordIndex == 0){
@@ -153,6 +153,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         this.nextRecordIndex += 1;
 
         return this.currentPosting = new Posting(docId, freq);
+    }
+
+    private boolean reachedBlockEnd(){
+        if(this.loadedSkipBlock == null || this.docIdsDecompressed == null){
+            // case in which there is no block currently loaded
+            return true;
+        }
+        if(this.nextRecordIndexInBlock >= this.docIdsDecompressed.length){
+            return true;
+        }
+        return false;
     }
 
     protected LRUCache<SkipBlock, Pair<int[], int[]>> cache = useCache ? new LRUCache<SkipBlock, Pair<int[], int[]>>(cacheSize, null) : null;
