@@ -199,6 +199,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     private Future<Pair<int[], int[]>> future;
     private LoadingPostingListBlock loader;
+
+    private SkipBlock loadedSkipBlock;
     /**
      * resets nextRecordIndexInBlock to 0
      * loads docIds and frequencies buffer for the current skip block
@@ -213,6 +215,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         }
 
         this.nextRecordIndexInBlock = 0;
+
+        if(sb.equals(loadedSkipBlock)){
+            // case in which the currentSkipBlock was already loaded
+            return true;
+        }
 
         Pair<int[], int[]> outcome = (useCache) ? this.cache.get(sb) : null;
 
@@ -253,7 +260,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("Current term: " + term);
+                System.out.println("Exception in Iterator main thread, current term: " + term);
                 return false;
             }
 
@@ -270,7 +277,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 this.future = executor.submit(loader);
 
         }
-
+        this.loadedSkipBlock = sb;
         return true;
     }
 
@@ -385,9 +392,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         this.nextRecordIndexInBlock = 0;
         this.currentPosting = null;
         if(useThreads && this.future != null){
-            this.future.cancel(false);
+            this.future.cancel(true);
         }
         this.future = null;
+        this.loader = null;
         //try{
         //    this.docIdsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
         //    this.freqsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
@@ -396,6 +404,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         //}catch(Exception e){
         //    e.printStackTrace();
         //}
+        this.loadPostingListCurrentSkipBlock();
     }
 
     @Override
