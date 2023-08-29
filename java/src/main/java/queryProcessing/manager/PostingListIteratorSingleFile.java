@@ -191,7 +191,7 @@ public class PostingListIteratorSingleFile implements PostingListIterator{
     }
 
     @Override
-    public void closeList() {
+    public void close() {
         this.binaryFileManager.close();
     }
 

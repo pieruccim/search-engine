@@ -21,7 +21,7 @@ public class PostingListIteratorFactory {
     protected static final int cacheSize = ConfigLoader.getIntProperty("performance.iteratorFactory.cache.size");
     protected static final boolean useCache = ConfigLoader.getPropertyBool("performance.iteratorFactory.cache.enabled");
 
-    private final static LRUCache<String, PostingListIterator> LRUcache = new LRUCache<String, PostingListIterator>(cacheSize, (PostingListIterator p) -> {p.closeList(); return true;});
+    private final static LRUCache<String, PostingListIterator> LRUcache = new LRUCache<String, PostingListIterator>(cacheSize, (PostingListIterator p) -> {p.close(); return true;});
 
     private static boolean printedInfos = false;
 
@@ -120,7 +120,7 @@ public static void openIterators(List<? extends VocabularyFileRecord> records, A
 
         if(useCache){
             for( PostingListIterator posting : LRUcache.values()){
-                posting.closeList();
+                posting.close();
             }
         }
         if(executor != null){

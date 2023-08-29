@@ -187,7 +187,7 @@ public class DAAT extends DocumentProcessor {
 
         // close all iterators
         //for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairs) {
-        //    pair.getValue().closeList();
+        //    pair.getValue().close();
         //}
 
         return bestKdocs;

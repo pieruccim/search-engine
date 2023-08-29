@@ -49,7 +49,7 @@ public class TAAT extends DocumentProcessor {
 
             isFirstIterator = false;
 
-            //iterator.closeList();
+            //iterator.close();
         }
 
         //loop through the documentScore map

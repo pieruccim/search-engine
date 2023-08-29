@@ -5,7 +5,7 @@ import java.util.Iterator;
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
 
-public interface PostingListIterator extends Iterator<Posting>{
+public interface PostingListIterator extends Iterator<Posting>, AutoCloseable{
 
     /**
      * 
@@ -41,5 +41,5 @@ public interface PostingListIterator extends Iterator<Posting>{
     /**
      * 
      */
-    public void closeList();
+    public void close();
 }

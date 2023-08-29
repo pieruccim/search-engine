@@ -415,7 +415,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     }
 
     @Override
-    public void closeList() {
+    public void close() {
         this.freqsBinaryFileManager.close();
         this.freqsBinaryFileManager.close();
         if(this.future != null){

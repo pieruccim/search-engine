@@ -179,7 +179,7 @@ public class MaxScore extends DocumentProcessor{
         // close all iterators
         // now this aspect is managed by PostingListIteratorFactory
         //for (PostingListIterator iterator : allIterators) {
-        //    iterator.closeList();
+        //    iterator.close();
         //}
 
         return bestKdocs;

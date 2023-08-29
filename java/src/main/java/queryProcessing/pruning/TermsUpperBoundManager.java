@@ -101,7 +101,7 @@ public class TermsUpperBoundManager {
                 current = iterator.next();
                 termUpperBound = Math.max(termUpperBound, scoreFunction.documentWeight(vocabularyRecord, current) );
             }
-            //iterator.closeList();
+            //iterator.close();
             //here, we have iterated over the whole posting list for that term
             try {
                 binaryFileManager.writeDouble(termUpperBound);
