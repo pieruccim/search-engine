@@ -21,6 +21,10 @@ public class PostingListIteratorFactory {
     protected static final int cacheSize = ConfigLoader.getIntProperty("performance.iteratorFactory.cache.size");
     protected static final boolean useCache = ConfigLoader.getPropertyBool("performance.iteratorFactory.cache.enabled");
 
+    protected static final boolean useThreads = ConfigLoader.getPropertyBool("performance.iteratorFactory.threads.enabled");
+    private static final int howManyThreads = ConfigLoader.getIntProperty("performance.iteratorFactory.threads.howMany");
+    private static ExecutorService executor = useThreads ? Executors.newFixedThreadPool(howManyThreads) : null;
+
     private final static LRUCache<String, PostingListIterator> LRUcache = new LRUCache<String, PostingListIterator>(cacheSize, (PostingListIterator p) -> {p.close(); return true;});
 
     private static boolean printedInfos = false;
@@ -64,10 +68,7 @@ public class PostingListIteratorFactory {
         return postingListIterator;
     }
 
-    private static final int howManyThreads = 10;
-
-    private static ExecutorService executor = Executors.newFixedThreadPool(howManyThreads);
-
+    
     private static ArrayList<Pair<VocabularyFileRecord, Future<PostingListIterator>>> futureList = new ArrayList<Pair<VocabularyFileRecord, Future<PostingListIterator>>>();
 
     /**
@@ -81,32 +82,38 @@ public static void openIterators(List<? extends VocabularyFileRecord> records, A
             printedInfos = printInfos();
         }
         
-        futureList.clear();
+        if(useThreads){
+            futureList.clear();
 
-        for (VocabularyFileRecord vocabularyFileRecord : records) {
-            futureList.add( new Pair<VocabularyFileRecord, Future<PostingListIterator>>(vocabularyFileRecord, executor.submit(() -> {return openIterator(vocabularyFileRecord);})));
-        }
-
-        for (Pair<VocabularyFileRecord, Future<PostingListIterator>> record : futureList) {
-            PostingListIterator pl = null;
-            try {
-				if(record.getValue() != null)
-                    pl = record.getValue().get();
-
-			} catch (InterruptedException e) {
-				//e.printStackTrace();
-                pl = null;
-			} catch (ExecutionException e) {
-				//e.printStackTrace();
-                pl = null;
-			}
-            if(pl == null){
-                if(record.getValue() != null)
-                    record.getValue().cancel(true);
-                System.out.println("Loading iterator in main thread for the term: " + record.getKey().getTerm());
-                pl = openIterator(record.getKey());
+            for (VocabularyFileRecord vocabularyFileRecord : records) {
+                futureList.add( new Pair<VocabularyFileRecord, Future<PostingListIterator>>(vocabularyFileRecord, executor.submit(() -> {return openIterator(vocabularyFileRecord);})));
             }
-            retList.add(new Pair<VocabularyFileRecord, PostingListIterator>(record.getKey(), pl));
+
+            for (Pair<VocabularyFileRecord, Future<PostingListIterator>> record : futureList) {
+                PostingListIterator pl = null;
+                try {
+                    if(record.getValue() != null)
+                        pl = record.getValue().get();
+
+                } catch (InterruptedException e) {
+                    //e.printStackTrace();
+                    pl = null;
+                } catch (ExecutionException e) {
+                    //e.printStackTrace();
+                    pl = null;
+                }
+                if(pl == null){
+                    if(record.getValue() != null)
+                        record.getValue().cancel(true);
+                    System.out.println("Loading iterator in main thread for the term: " + record.getKey().getTerm());
+                    pl = openIterator(record.getKey());
+                }
+                retList.add(new Pair<VocabularyFileRecord, PostingListIterator>(record.getKey(), pl));
+            }
+        }else{
+            for (VocabularyFileRecord vocabularyFileRecord : records) {
+                retList.add(new Pair<VocabularyFileRecord, PostingListIterator>(vocabularyFileRecord, openIterator(vocabularyFileRecord)));
+            }
         }
     }
 

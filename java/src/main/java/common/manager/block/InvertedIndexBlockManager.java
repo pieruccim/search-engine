@@ -1,6 +1,5 @@
 package common.manager.block;
 
-import common.bean.DocumentIndexFileRecord;
 import common.bean.OffsetInvertedIndex;
 import common.bean.Posting;
 import common.bean.WrittenBytes;

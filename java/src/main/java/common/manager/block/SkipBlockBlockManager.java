@@ -2,9 +2,7 @@ package common.manager.block;
 
 import java.io.IOException;
 
-import common.bean.OffsetInvertedIndex;
 import common.bean.SkipBlock;
-import common.manager.block.VocabularyBlockManager.OffsetType;
 import common.manager.file.FileManager;
 import config.ConfigLoader;
 

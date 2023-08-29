@@ -141,6 +141,7 @@ public class Indexer {
 
         saveBlock();
         resetDataStructures();
+        txt.close();
         //once process corpus is done, I can save CollectionStatistics on file
         collectionStatisticsManager.saveCollectionStatistics(collectionStatistics);
     }
