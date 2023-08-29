@@ -367,6 +367,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                             " upperBound: " + upperBound + " sb.maxdocid: " + sb.getMaxDocId() + "term: " + term);
                         //System.exit(0);
                     }
+                    this.nextRecordIndex++;
+                    this.nextRecordIndexInBlock++;
                     return this.currentPosting = new Posting(docuId, freq);
                 }
 
@@ -378,6 +380,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
                 int docuId = docIdsDecompressed[nextRecordIndexInBlock];
                 int freq = freqsDecompressed[nextRecordIndexInBlock];
+                this.nextRecordIndex++;
+                this.nextRecordIndexInBlock++;
                 return this.currentPosting = new Posting(docuId, freq);
             }else{
                 // when we have middlePosting.getDocid() > docId
@@ -393,6 +397,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
             int docuId = docIdsDecompressed[nextRecordIndexInBlock];
             int freq = freqsDecompressed[nextRecordIndexInBlock];
+            nextRecordIndex++;
+            nextRecordIndexInBlock++;
             return this.currentPosting = new Posting(docuId, freq);
         }else{
             this.nextRecordIndexInBlock = sb.getHowManyPostings();
