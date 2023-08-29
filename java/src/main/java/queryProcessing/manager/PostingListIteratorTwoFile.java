@@ -24,6 +24,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     public static final boolean useThreads = ConfigLoader.getPropertyBool("performance.iterators.useThreads");
     public static final int howManyThreads = ConfigLoader.getIntProperty("performance.iterators.threads.howMany");
     public static final int cacheSize = ConfigLoader.getIntProperty("performance.iterators.cache.size");
+    public static final boolean debug = ConfigLoader.getPropertyBool("performance.iterators.debug");
 
     protected int[] docIdsDecompressed;
     protected int[] freqsDecompressed ;
@@ -173,7 +174,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         @Override
         public Pair<int[], int[]> call(){
             if(this.nextSB == null){
-                System.out.println("Called a thread passing a null parameter");
+                if(debug) System.out.println("Called a thread passing a null parameter");
                 return null;
             }
 
@@ -184,9 +185,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 docIdsDecompressedNextBlock = threadDocIdsBinaryFileManager.readIntArray(this.nextSB.getDocIdByteSize(), this.nextSB.getDocIdFileOffset(), this.nextSB.getHowManyPostings());
                 freqsDecompressedNextBlock  = threadFreqsBinaryFileManager.readIntArray(this.nextSB.getFreqByteSize(), this.nextSB.getFreqFileOffset(), this.nextSB.getHowManyPostings()   );
             } catch (Exception e) {
+                if(debug){
                 e.printStackTrace();
                 System.out.println("Exception in thread for term iterator: " + term);
                 System.out.println("SkipBlock that was trying to read: " + this.nextSB.toString());
+                }
                 return null;
             }
             Pair<int[], int[]> ret = new Pair<int[], int[]>(docIdsDecompressedNextBlock, freqsDecompressedNextBlock);
@@ -208,6 +211,9 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
      * @return false in case of error
      */
     private boolean loadPostingListCurrentSkipBlock(){
+        return this.loadPostingListCurrentSkipBlock(1);
+    }
+    private boolean loadPostingListCurrentSkipBlock(int numRetries){
         SkipBlock sb = this.getCurrentSkipBlock();
 
         if(sb == null){
@@ -266,7 +272,14 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("Exception in Iterator main thread, current term: " + term);
+                System.out.println("Exception in Iterator main thread, current term: " + term + "num retries left: " + numRetries);
+                this.loadedSkipBlock = null;
+                this.docIdsDecompressed = null;
+                this.freqsDecompressed = null;
+                if(numRetries > 0){
+                    return this.loadPostingListCurrentSkipBlock(numRetries - 1);
+                }
+                System.exit(-1);
                 return false;
             }
 
@@ -351,7 +364,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                     int freq = freqsDecompressed[nextRecordIndexInBlock];
                     if(docuId < docId){
                         System.out.println("error!" + "nextGEQ(" + docId + ") docuId returned: " + docuId + " indexInBlock: " + nextRecordIndexInBlock +
-                            " upperBound: " + upperBound + " sb.maxdocid: " + sb.getMaxDocId());
+                            " upperBound: " + upperBound + " sb.maxdocid: " + sb.getMaxDocId() + "term: " + term);
                         //System.exit(0);
                     }
                     return this.currentPosting = new Posting(docuId, freq);

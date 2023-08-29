@@ -18,6 +18,7 @@ performance.iterators.useCache=TRUE
 performance.iterators.useThreads=TRUE
 performance.iterators.threads.howMany=20
 performance.iterators.cache.size=31
+performance.iterators.debug=false
 performance.iteratorFactory.cache.size=2047
 performance.iteratorFactory.cache.enabled=TRUE
 cache.class.debug=false

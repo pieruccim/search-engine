@@ -134,6 +134,7 @@ public static void openIterators(List<? extends VocabularyFileRecord> records, A
                 System.out.print("\rClosing iterator " + i + " out of " + LRUcache.size());
                 posting.close();
             }
+            System.out.println();
         }
         if(executor != null){
             executor.shutdown();
