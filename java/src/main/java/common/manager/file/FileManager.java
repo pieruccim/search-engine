@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
-public abstract class FileManager {
+public abstract class FileManager implements AutoCloseable{
 
     /*
     * -   metodo per leggere un intero da file
@@ -105,5 +105,5 @@ public abstract class FileManager {
         }
     }
 
-    abstract void close();
+    abstract public void close();
 }
