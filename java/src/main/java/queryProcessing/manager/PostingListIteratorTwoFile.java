@@ -453,10 +453,6 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     private boolean hasNextSkipBlock(){
         return this.currentSkipBlockIndex + 1 < this.howManySkipBlocks;
     }
-    private SkipBlock getNextSkipBlock(){
-        this.currentSkipBlockIndex += 1;
-        return this.getSkipBlockAt(this.currentSkipBlockIndex);
-    }
     private SkipBlock getCurrentSkipBlock(){
         return this.getSkipBlockAt(this.currentSkipBlockIndex);
     }

@@ -70,7 +70,7 @@ public class QueryProcessor {
         else if (documentProcessorType == DocumentProcessorType.TAAT){
             this.documentProcessor = new TAAT();
         }else if(documentProcessorType == DocumentProcessorType.MAXSCORE){
-            this.documentProcessor = new MaxScore(4.0);
+            this.documentProcessor = new MaxScore();
         }
         else{
             throw new UnsupportedOperationException("unsupported Document Processor type");

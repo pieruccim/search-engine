@@ -75,7 +75,7 @@ public class PostingListIteratorFactory {
      * @param records
      * @param retList the arraylist where the opened / retrieved iterators will be put
      */
-    public static void openIterators(List<VocabularyFileRecord> records, ArrayList<Pair<VocabularyFileRecord, PostingListIterator>> retList){
+public static void openIterators(List<? extends VocabularyFileRecord> records, ArrayList<Pair<VocabularyFileRecord, PostingListIterator>> retList){
         
         if(printedInfos == false){
             printedInfos = printInfos();

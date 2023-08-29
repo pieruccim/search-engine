@@ -44,6 +44,16 @@ public class ConfigLoader {
         }
     }
 
+    public static double getDoubleProperty(String key) {
+        String value = properties.getProperty(key);
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error parsing double value for key '" + key + "': " + e.getMessage());
+        }
+    }
+
     public static Boolean getPropertyBool(String key){
         return Boolean.parseBoolean(properties.getProperty(key));
     }

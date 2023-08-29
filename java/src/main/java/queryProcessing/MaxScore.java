@@ -8,6 +8,7 @@ import java.util.TreeSet;
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
 import common.bean.VocabularyFileRecordUB;
+import config.ConfigLoader;
 import queryProcessing.QueryProcessor.QueryType;
 import queryProcessing.manager.PostingListIterator;
 import queryProcessing.manager.PostingListIteratorFactory;
@@ -16,6 +17,10 @@ import queryProcessing.scoring.ScoreFunction;
 public class MaxScore extends DocumentProcessor{
 
     protected double threshold;
+
+    public MaxScore(){
+        this.threshold = ConfigLoader.getDoubleProperty("scoring.MaxScore.threshold");
+    }
 
     public MaxScore(double threshold){
         this.threshold = threshold;
