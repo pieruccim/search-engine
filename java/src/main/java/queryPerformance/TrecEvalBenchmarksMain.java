@@ -1,7 +1,6 @@
 package queryPerformance;
 
 import javafx.util.Pair;
-import preprocessing.Preprocessor;
 import queryProcessing.DocumentProcessor.*;
 import queryProcessing.QueryProcessor;
 import queryProcessing.QueryProcessor.*;
