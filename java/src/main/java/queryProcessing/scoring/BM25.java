@@ -1,6 +1,7 @@
 package queryProcessing.scoring;
 
 import common.bean.*;
+import config.ConfigLoader;
 
 public class BM25 extends ScoreFunction {
 
@@ -9,8 +10,8 @@ public class BM25 extends ScoreFunction {
     private double k1;
     private double b;
 
-    private static final double defaultK1 = 1.2;
-    private static final double defaultB = 0.75;
+    private static final double defaultK1 = ConfigLoader.getDoubleProperty("scoring.BM25.k1");
+    private static final double defaultB = ConfigLoader.getDoubleProperty("scoring.BM25.B");
 
     public BM25(int numDocuments, double avgDocLength, int[] documentIndexLengthInformation) {
         super(numDocuments);

@@ -22,5 +22,7 @@ performance.iteratorFactory.cache.size=2047
 performance.iteratorFactory.cache.enabled=TRUE
 cache.class.debug=false
 scoring.MaxScore.threshold=4.0
+scoring.BM25.k1=1.2
+scoring.BM25.B=0.75
 performance.iteratorFactory.threads.enabled=true
 performance.iteratorFactory.threads.howMany=10
