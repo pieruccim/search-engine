@@ -186,13 +186,14 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Exception in thread for term iterator: " + term);
+                System.out.println("SkipBlock that was trying to read: " + this.nextSB.toString());
                 return null;
             }
             Pair<int[], int[]> ret = new Pair<int[], int[]>(docIdsDecompressedNextBlock, freqsDecompressedNextBlock);
     
-            if(useCache){
-                cache.put(this.nextSB, ret);
-            }
+            //if(useCache){
+            //    cache.put(this.nextSB, ret);
+            //}
             return ret;
         }
     }
@@ -237,6 +238,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                     
                     future = null;
                     loader = null;
+
+                    if(useCache){
+                        this.cache.put(sb, outcome);
+                    }
                 }
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -247,6 +252,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
             if(useThreads && this.future != null){
                 this.future.cancel(true);
+                this.future = null;
                 this.loader = null;
             }
 
@@ -270,6 +276,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 if(this.future != null){
                     this.future.cancel(true);
                     this.loader = null;
+                    this.future = null;
                 }
 
                 SkipBlock nextBlock = this.getSkipBlockAt(currentSkipBlockIndex + 1);
