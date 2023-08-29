@@ -1,7 +1,5 @@
 package common.manager.file.compression;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class UnaryCompressor implements Compressor{

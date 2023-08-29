@@ -1,7 +1,6 @@
 package common.manager;
 
 import common.bean.CollectionStatistics;
-import common.manager.file.FileManager;
 import common.manager.file.FileManager.*;
 import common.manager.file.TextualFileManager;
 

@@ -280,7 +280,7 @@ public class Indexer {
             e.printStackTrace();
         }
 
-        int howMany;
+        //int howMany;
 
         for (int i = 0; i < currentBlockNo; i++) {
 

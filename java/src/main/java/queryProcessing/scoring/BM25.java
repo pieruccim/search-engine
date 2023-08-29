@@ -1,9 +1,6 @@
 package queryProcessing.scoring;
 
 import common.bean.*;
-import common.manager.CollectionStatisticsManager;
-
-import java.util.HashMap;
 
 public class BM25 extends ScoreFunction {
 

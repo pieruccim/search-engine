@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import common.bean.CollectionStatistics;
-import common.bean.DocumentIndexFileRecord;
 import common.bean.VocabularyFileRecord;
 import common.bean.VocabularyFileRecordUB;
 import common.manager.CollectionStatisticsManager;

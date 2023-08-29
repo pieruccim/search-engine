@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.util.zip.GZIPInputStream;
 
 import jdk.jshell.spi.ExecutionControl;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -95,10 +94,8 @@ public class TextualFileManager extends FileManager{
                     this.reader = new BufferedReader(new InputStreamReader(this.tarInput, Charset.forName(this.charset)));
                     
                 } catch (FileNotFoundException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }else{

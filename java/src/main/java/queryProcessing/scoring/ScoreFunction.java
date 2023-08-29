@@ -3,8 +3,6 @@ package queryProcessing.scoring;
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public abstract class ScoreFunction {
 

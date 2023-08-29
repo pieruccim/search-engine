@@ -1,8 +1,6 @@
 package common.manager.file.compression;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import static java.lang.Math.log;
 
 public class DeltaCompressor implements Compressor{
 

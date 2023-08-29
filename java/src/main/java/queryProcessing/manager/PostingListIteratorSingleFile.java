@@ -1,7 +1,6 @@
 package queryProcessing.manager;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import common.bean.OffsetIISingleFile;
 import common.bean.Posting;

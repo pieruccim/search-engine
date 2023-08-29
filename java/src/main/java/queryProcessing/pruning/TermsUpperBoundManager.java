@@ -6,11 +6,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 
 import common.bean.CollectionStatistics;
-import common.bean.DocumentIndexFileRecord;
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
 import common.manager.block.DocumentIndexBlockManager;
@@ -197,7 +194,6 @@ public class TermsUpperBoundManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        DocumentIndexFileRecord documentIndexFileRecord = null;
         
         int [] documentIndexLengthsInformation = new int[collectionStatistics.getTotalDocuments()];
         int i = 0;
