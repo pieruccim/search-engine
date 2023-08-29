@@ -88,19 +88,21 @@ public class PostingListIteratorFactory {
         }
 
         for (Pair<VocabularyFileRecord, Future<PostingListIterator>> record : futureList) {
-            PostingListIterator pl;
+            PostingListIterator pl = null;
             try {
-				
-                pl = record.getValue().get();
+				if(record.getValue() != null)
+                    pl = record.getValue().get();
 
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
                 pl = null;
 			} catch (ExecutionException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
                 pl = null;
 			}
             if(pl == null){
+                if(record.getValue() != null)
+                    record.getValue().cancel(true);
                 System.out.println("Loading iterator in main thread for the term: " + record.getKey().getTerm());
                 pl = openIterator(record.getKey());
             }
