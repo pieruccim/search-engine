@@ -29,10 +29,12 @@ public class PostingListIteratorFactory {
 
     private static boolean printedInfos = false;
 
-    private static boolean printInfos(){
+    public static boolean printInfos(){
+        System.out.println("PostingListIteratorFactory use threads: " + useThreads);
         System.out.println("PostingListIteratorFactory use cache: " + ((useCache) ? (true + "\tcache size: " + cacheSize) : false ) );
         System.out.println("PostingListIteratorTwoFile use threads: " + PostingListIteratorTwoFile.useThreads );
         System.out.println("PostingListIteratorTwoFile use PostingListBlocks cache: " + ((PostingListIteratorTwoFile.useCache) ? (true + "\tcache size: " + PostingListIteratorTwoFile.cacheSize) : false ) );
+        printedInfos=true;
         return true;
     }
 
@@ -126,7 +128,10 @@ public static void openIterators(List<? extends VocabularyFileRecord> records, A
         }
 
         if(useCache){
+            int i = 0;
             for( PostingListIterator posting : LRUcache.values()){
+                i += 1;
+                System.out.print("\rClosing iterator " + i + " out of " + LRUcache.size());
                 posting.close();
             }
         }
