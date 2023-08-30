@@ -428,18 +428,14 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         this.nextRecordIndex = 0;
         this.nextRecordIndexInBlock = 0;
         this.currentPosting = null;
+        this.loadedSkipBlock = null;
+        this.docIdsDecompressed = null;
+        this.freqsDecompressed = null;
         if(useThreads && this.threadInfo != null){
             this.threadInfo.getValue().cancel(true);
         }
         this.threadInfo = null;
-        //try{
-        //    this.docIdsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
-        //    this.freqsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
-        //}catch(IOException e){
-        //    e.printStackTrace();
-        //}catch(Exception e){
-        //    e.printStackTrace();
-        //}
+
         this.loadPostingListCurrentSkipBlock();
     }
 
