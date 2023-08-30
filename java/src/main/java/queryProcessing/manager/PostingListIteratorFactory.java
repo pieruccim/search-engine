@@ -8,7 +8,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import common.bean.VocabularyFileRecord;
-import common.manager.block.VocabularyBlockManager.OffsetType;
 import common.utils.LRUCache;
 import config.ConfigLoader;
 import javafx.util.Pair;
@@ -17,7 +16,6 @@ import javafx.util.Pair;
 
 public class PostingListIteratorFactory {
 
-    protected static OffsetType offsetType = OffsetType.valueOf(ConfigLoader.getProperty("blocks.invertedindex.type"));
     protected static final int cacheSize = ConfigLoader.getIntProperty("performance.iteratorFactory.cache.size");
     protected static final boolean useCache = ConfigLoader.getPropertyBool("performance.iteratorFactory.cache.enabled");
 
@@ -52,16 +50,9 @@ public class PostingListIteratorFactory {
             return postingListIterator;
         }
 
-        switch (PostingListIteratorFactory.offsetType) {
-            case SINGLE_FILE:
-                postingListIterator = new PostingListIteratorSingleFile();
-                break;
-            case TWO_FILES:
-                postingListIterator = new PostingListIteratorTwoFile();
-                break;
-            default:
-                throw new UnsupportedOperationException("Unimplemented OffsetType handling for " + PostingListIteratorFactory.offsetType);
-        }
+
+        postingListIterator = new PostingListIteratorTwoFile();
+
 
         postingListIterator.openList(vocabularyFileRecord);
 
@@ -124,9 +115,8 @@ public static void openIterators(List<? extends VocabularyFileRecord> records, A
      * 
      */
     public static void close(){
-        if(PostingListIteratorFactory.offsetType == OffsetType.TWO_FILES){
-            PostingListIteratorTwoFile.shutdownThreads();
-        }
+
+        PostingListIteratorTwoFile.shutdownThreads();
 
         if(useCache){
             int i = 0;

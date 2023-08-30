@@ -15,13 +15,6 @@ public class VocabularyBlockManager extends TextualBlockManager<VocabularyFileRe
 
     protected static String mergedBlockFilePath = ConfigLoader.getProperty("blocks.merged.vocabulary.path");
 
-    public enum OffsetType{
-        SINGLE_FILE,
-        TWO_FILES
-    };
-
-    protected static OffsetType offsetType = OffsetType.valueOf(ConfigLoader.getProperty("blocks.invertedindex.type"));
-
     public VocabularyBlockManager(int blockNo, FileManager.MODE mode) throws IOException {
         super(blockNo, blockDirectory, mode);
     }
