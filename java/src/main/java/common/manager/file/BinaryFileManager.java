@@ -225,16 +225,7 @@ public class BinaryFileManager extends FileManager {
         }*/
 
         this.randomAccessFile.seek(fileOffset);
-        int howManyRead = 0;
-        while(howManyRead < byteSize){
-            int tmp = this.randomAccessFile.read(compressedData, howManyRead, byteSize - howManyRead);
-            if(tmp == -1){
-                System.out.println("Attempt to read from file '" + this.filePath + "' while EOF reached" +
-                    " byte read: " + howManyRead + " byte requested: " + byteSize + " startingOffset: " + fileOffset);
-                break;
-            }
-            howManyRead += tmp;
-        }
+        this.randomAccessFile.readFully(compressedData);
 
         return compressedData;
     }
@@ -269,7 +260,7 @@ public class BinaryFileManager extends FileManager {
         }
     }
 
-    public int[] readIntArray(int byteSize, long fileOffset, int howManyInt) throws Exception {
+    public synchronized int[] readIntArray(int byteSize, long fileOffset, int howManyInt) throws Exception {
         if (this.mode != MODE.READ) {
             throw new Exception("Binary file manager not in MODE.READ\tCannot perform readIntArray");
         }
