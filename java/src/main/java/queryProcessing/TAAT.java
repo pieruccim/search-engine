@@ -2,6 +2,7 @@ package queryProcessing;
 
 import common.bean.Posting;
 import common.bean.VocabularyFileRecord;
+import common.bean.VocabularyFileRecordUB;
 import queryProcessing.manager.PostingListIterator;
 import queryProcessing.manager.PostingListIteratorFactory;
 import queryProcessing.scoring.ScoreFunction;
@@ -13,9 +14,10 @@ public class TAAT extends DocumentProcessor {
 
     private static TreeSet<DocumentScore> priorityQueue = new TreeSet<DocumentScore>(((Comparator<DocumentScore>)(DocumentScore::compare)).reversed());
     private static Map<Integer, Double> documentScores = new HashMap<>();
-    private static ArrayList<Integer> docIds = new ArrayList<Integer>();
-    private static ArrayList<Integer> docIdsNext = new ArrayList<Integer>();
-    private static ArrayList<Integer> swap;
+    private static Set<Integer> docIds = new HashSet<Integer>();
+    private static Set<Integer> docIdsNext = new HashSet<Integer>();
+    private static Set<Integer> swap;
+    private static final Comparator<? super VocabularyFileRecord> comparator = Comparator.comparing(VocabularyFileRecord::getDf);
 
     @Override
     public List<DocumentScore> scoreDocuments(List<VocabularyFileRecord> queryTerms, ScoreFunction scoringFunction, QueryType queryType, int k) {
@@ -24,12 +26,16 @@ public class TAAT extends DocumentProcessor {
         documentScores.clear();
 
         if(queryType == QueryType.CONJUNCTIVE){
-            this.docIds.clear();
-            this.docIdsNext.clear();
+            docIds.clear();
+            docIdsNext.clear();
         }
         //Map<Integer, Integer> documentQueryTermCount = new HashMap<>(); // to check whether a doc contains all query terms
 
         boolean isFirstIterator = true;
+        if(queryType == QueryType.CONJUNCTIVE){
+            //sort by increasing number of documents, so that in CONJUNCTIVE mode less documents will be processed
+            queryTerms.sort(comparator);
+        }
 
         for (VocabularyFileRecord term : queryTerms) {
             PostingListIterator iterator = PostingListIteratorFactory.openIterator(term);
@@ -52,10 +58,10 @@ public class TAAT extends DocumentProcessor {
                         docIds.add(docId);
                     }
                 }else{
-                    Double prevScore = documentScores.get(docId);
                     if(queryType == QueryType.DISJUNCTIVE || docIds.contains(docId)){
+                        Double prevScore = documentScores.get(docId);
                         documentScores.put(docId, ((prevScore != null) ? prevScore: 0.0 ) + scoringFunction.documentWeight(term, posting) );
-                        if(queryType == QueryType.CONJUNCTIVE){
+                        if( ! isFirstIterator && queryType == QueryType.CONJUNCTIVE){
                             docIdsNext.add(docId);
                         }
                     }
@@ -77,6 +83,11 @@ public class TAAT extends DocumentProcessor {
         double minScore = -1;
 
         for (Map.Entry<Integer, Double> entry : documentScores.entrySet()) {
+            if(queryType == QueryType.CONJUNCTIVE){
+                if( ! docIds.contains(entry.getKey())){
+                    continue;
+                }
+            }
             //if(queryType == QueryType.CONJUNCTIVE){
             //    // if the count of query terms inside the doc is < of tot query terms we skip that doc
             //    if(documentQueryTermCount.get(entry.getKey()) < queryTerms.size()){
