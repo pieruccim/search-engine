@@ -68,10 +68,12 @@ public class TAAT extends DocumentProcessor {
                 }
 
             }
-            if( ! isFirstIterator){
-                swap = docIds;
-                docIds = docIdsNext;
-                docIdsNext = swap;
+            if( ! isFirstIterator ){
+                if(docIds.size() != docIdsNext.size()){
+                    swap = docIds;
+                    docIds = docIdsNext;
+                    docIdsNext = swap;
+                }
                 docIdsNext.clear();
             }
             isFirstIterator = false;
