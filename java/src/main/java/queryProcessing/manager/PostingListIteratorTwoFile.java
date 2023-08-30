@@ -19,7 +19,7 @@ import java.util.concurrent.Future;
 
 public class PostingListIteratorTwoFile implements PostingListIterator {
 
-    protected static final int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
+    //protected static final int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
     public static final boolean useCache = ConfigLoader.getPropertyBool("performance.iterators.useCache");
     public static final boolean useThreads = ConfigLoader.getPropertyBool("performance.iterators.useThreads");
     public static final int howManyThreads = ConfigLoader.getIntProperty("performance.iterators.threads.howMany");
@@ -336,11 +336,16 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         if(sb.getMaxDocId() < docId || this.getCurrentPosting() == null){   // this.getCurrentPosting() == null case in which the postings block has still to be loaded
             // move to the right skipBlock (skipping the ones that don't contain required docId)
             
+            this.nextRecordIndex -= this.nextRecordIndexInBlock;
+            
             while(docId > sb.getMaxDocId()){
                 // iterate until the current skipBlock contains the docId
                 if(this.hasNextSkipBlock()){
+                    
+                    this.nextRecordIndex += sb.getHowManyPostings();
                     currentSkipBlockIndex += 1;
                     sb = this.getCurrentSkipBlock();
+                    
                 }else{
                     //the skip blocks are finished and I have not found a Posting whose docId is >= requested docId
                     this.nextRecordIndex = this.howManyRecords;
@@ -348,12 +353,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             }
 
-            this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen;
-
             this.loadPostingListCurrentSkipBlock();
         }
 
         //we can perform binary search to retrieve the first Posting GEQ
+        this.nextRecordIndex -= this.nextRecordIndexInBlock;
 
         int lowerBound = 0;
 
@@ -370,7 +374,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
                 if(middle == lowerBound){
                     nextRecordIndexInBlock = upperBound;
-                    this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
+                    this.nextRecordIndex += this.nextRecordIndexInBlock;
                     int docuId = docIdsDecompressed[nextRecordIndexInBlock];
                     int freq = freqsDecompressed[nextRecordIndexInBlock];
                     if(docuId < docId){
@@ -388,7 +392,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
             }else if(middleDocId == docId){
                 nextRecordIndexInBlock = middle;
-                this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
+                this.nextRecordIndex += this.nextRecordIndexInBlock;
                 int docuId = docIdsDecompressed[nextRecordIndexInBlock];
                 int freq = freqsDecompressed[nextRecordIndexInBlock];
                 this.nextRecordIndex++;
@@ -405,7 +409,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         if(middleDocId >= docId){
             nextRecordIndexInBlock = middle;
-            this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
+            this.nextRecordIndex += this.nextRecordIndexInBlock;
             int docuId = docIdsDecompressed[nextRecordIndexInBlock];
             int freq = freqsDecompressed[nextRecordIndexInBlock];
             nextRecordIndex++;

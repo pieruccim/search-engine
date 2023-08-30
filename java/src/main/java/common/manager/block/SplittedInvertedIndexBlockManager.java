@@ -27,7 +27,8 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
     protected static final String docIdsBlockFolder = ConfigLoader.getProperty("blocks.invertedindex.docIdFilePath");
     protected static final String freqBlockFolder = ConfigLoader.getProperty("blocks.invertedindex.freqFilePath");
 
-    public static int skipBlockMaxLength = ConfigLoader.getIntProperty("skipblocks.maxLen");
+    public static final int skipBlockMaxLength = ConfigLoader.getIntProperty("skipblocks.maxLen");
+    private static final boolean useVariableBlockSize = ConfigLoader.getPropertyBool("skipblocks.size.variable.enabled");
 
     public SplittedInvertedIndexBlockManager(int blockNo, MODE mode, boolean useCompression) throws IOException {
         this.useCompression = useCompression;
@@ -162,6 +163,17 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         throw new UnsupportedOperationException("Unimplemented method 'writeRow'");
     }
 
+    private long getMaximumSize(int postingLength){
+        if(! useVariableBlockSize){
+            return SplittedInvertedIndexBlockManager.skipBlockMaxLength;
+        }
+        long tmp = Math.round( Math.sqrt(postingLength) );
+        if(tmp < SplittedInvertedIndexBlockManager.skipBlockMaxLength){
+            return SplittedInvertedIndexBlockManager.skipBlockMaxLength;
+        }
+        return tmp;
+    }
+
     /**
      * @param r<Posting> r a complete posting list for a certain term
      * @return ArrayList<SkipBlock> the length is be equal to the number of blocks in which the posting list is split
@@ -177,11 +189,14 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         // we must obtain two arrays of integers, each of them has to be stored on the dedicated file by the binaryfilemanager
         ArrayList<Integer> docIds = new ArrayList<Integer>();
         ArrayList<Integer> freqs = new ArrayList<Integer>();
+
+        final long BLOCK_SIZE = this.getMaximumSize(r.size());
+
         for (Posting posting : r) {
             docIds.add( posting.getDocid());
             freqs.add(posting.getFreq());
             counter+=1;
-            if(counter % SplittedInvertedIndexBlockManager.skipBlockMaxLength == 0){
+            if(counter % BLOCK_SIZE == 0){
                 // here we write a whole skip block on file and store its informations
                 int docIdWrittenBytes = this.docIdBinaryFileManager.writeIntArray(docIds.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
                 int freqWrittenBytes  = this.freqBinaryFileManager.writeIntArray(freqs.subList(startingIndex, docIds.size()).stream().mapToInt(Integer::intValue).toArray());
@@ -189,14 +204,14 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
                 SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
                 ret.add(sb);
                 
-                startingIndex += SplittedInvertedIndexBlockManager.skipBlockMaxLength;
+                startingIndex += BLOCK_SIZE;
                 docIdOffset += docIdWrittenBytes;
                 freqOffset  += freqWrittenBytes;
             }
         }
 
-        // Manage the case in which the posting list has a size multiple of SplittedInvertedIndexBlockManager.skipBlockMaxLength
-        if (docIds.size()%SplittedInvertedIndexBlockManager.skipBlockMaxLength == 0 || freqs.size()%SplittedInvertedIndexBlockManager.skipBlockMaxLength == 0){
+        // Manage the case in which the posting list has a size multiple of BLOCK_SIZE
+        if ( docIds.size() % BLOCK_SIZE == 0 || freqs.size() % BLOCK_SIZE == 0){
             return ret;
         }
 
@@ -206,7 +221,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
         SkipBlock sb = new SkipBlock(docIdOffset, freqOffset, docIds.get(counter - 1), counter - startingIndex, docIdWrittenBytes, freqWrittenBytes);
         ret.add(sb);
         
-        //startingIndex += SplittedInvertedIndexBlockManager.skipBlockMaxLength;
+        //startingIndex += BLOCK_SIZE;
         //docIdOffset += docIdWrittenBytes;
         //freqOffset  += freqWrittenBytes;
         

@@ -13,6 +13,7 @@ blocks.merged.invertedIndex.path=${blocks.documentIndex.path}/merged-inverted-in
 blocks.invertedindex.docIdFilePath=${user.dir}/data/output/invertedIndexBlocks/docIds/
 blocks.invertedindex.freqFilePath=${user.dir}/data/output/invertedIndexBlocks/docIds/
 skipblocks.maxLen=500
+skipblocks.size.variable.enabled=false
 data.output.upperBounds.path=${user.dir}/data/output/upperBounds/
 performance.iterators.useCache=TRUE
 performance.iterators.useThreads=TRUE
