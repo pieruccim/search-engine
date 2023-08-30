@@ -238,7 +238,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         this.nextRecordIndexInBlock = 0;
 
-        if(sb.equals(loadedSkipBlock)){
+        if(sb.equals(loadedSkipBlock)
+                && docIdsDecompressed != null
+                && docIdsDecompressed.length == sb.getHowManyPostings()
+                && docIdsDecompressed[docIdsDecompressed.length - 1] == sb.getMaxDocId()){
             // case in which the currentSkipBlock was already loaded
             return true;
         }
@@ -285,7 +288,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("Exception in Iterator main thread, current term: " + term + "num retries left: " + numRetries);
+                System.out.println("Exception in Iterator main thread, current term: " + term + " num retries left: " + numRetries);
                 this.loadedSkipBlock = null;
                 this.docIdsDecompressed = null;
                 this.freqsDecompressed = null;
