@@ -15,7 +15,7 @@ The Search Engine is composed by the following main modules:
 * Query processing, which performs processing of queries using different Document Processors and Scoring Functions
 
 
-## How to compile modules
+## How to configure and compile modules
 
 ### Indexing module
 
@@ -30,6 +30,7 @@ The *Indexer* module can be configured using *config.properties* file, which all
 
 ### Query processing module
 
+#### Configuration properties
 The *Query processing* module can be configured using *config.properties* file, which allows to set the following properties.
 
 General properties:
@@ -45,4 +46,13 @@ Performance properties:
 - *performance.iteratorFactory.cache.enabled* and *performance.iteratorFactory.cache.size*, which allow to enable cache for Posting List Iterators and set cache size
 - *performance.iteratorFactory.threads.enabled* and *performance.iteratorFactory.threads.howMany*, which allow to enable threads for Posting List Iterators and set threads number
 
+#### Compiling properties
+
+On the other hand *Query processing* module can also be compiled using options, that will override the properties inside *config.properties* file. The available options are the followings:
+- *--results*, which allows to set the number of documents to be returned by the query
+- *--scoring*, which allows to set the scoring function between TFIDF and BM25
+- *--queryType*, which allows to choose query type between *disjunctive* and *conjunctive*
+- *--processingType*, which allows to choose document processor typer between *TAAT*, *DAAT* and *MaxScore*
+- *--stopWords*, which allows to enable stopwords removal
+- *--wordStemming*, which allows to enable words stemming
   
