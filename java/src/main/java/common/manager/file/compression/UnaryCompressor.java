@@ -18,7 +18,7 @@ public class UnaryCompressor implements Compressor{
         // Retrieve total number of bits to be written: number + 1 (zero bit separator)
         for (int num : data) {
             if (num > 0) {
-                nBits += num + 1;
+                nBits += num;
             } else {
                 System.out.println("Skipped element lower than 0 in the list of integers to be compressed");
             }
