@@ -212,8 +212,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         }
     }
 
-    private Future<Pair<int[], int[]>> future;
-    private LoadingPostingListBlock loader;
+    //private Future<Pair<int[], int[]>> future;
+    //private LoadingPostingListBlock loader;
+
+    private Pair<LoadingPostingListBlock, Future<Pair<int[], int[]>>> threadInfo;
 
     private SkipBlock loadedSkipBlock;
     /**
@@ -248,13 +250,12 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         else if(outcome == null && useThreads){
             try {
 
-                if (future != null && loader.nextSB.equals(sb) && (outcome = future.get()) != null){
+                if (this.threadInfo != null && this.threadInfo.getKey().nextSB.equals(sb) && (outcome = this.threadInfo.getValue().get()) != null){
 
                     this.docIdsDecompressed = outcome.getKey();
                     this.freqsDecompressed  = outcome.getValue();
                     
-                    future = null;
-                    loader = null;
+                    this.threadInfo = null;
 
                     if(useCache){
                         this.cache.put(sb, outcome);
@@ -267,10 +268,9 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         }
         if(outcome == null){
 
-            if(useThreads && this.future != null){
-                this.future.cancel(true);
-                this.future = null;
-                this.loader = null;
+            if(useThreads && this.threadInfo != null){
+                this.threadInfo.getValue().cancel(true);
+                this.threadInfo = null;
             }
 
             try {
@@ -297,15 +297,15 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         }
 
         if(this.hasNextSkipBlock() && useThreads){
-                if(this.future != null){
-                    this.future.cancel(true);
-                    this.loader = null;
-                    this.future = null;
+                if(this.threadInfo != null){
+                    this.threadInfo.getValue().cancel(true);
+                    this.threadInfo = null;
                 }
 
                 SkipBlock nextBlock = this.getSkipBlockAt(currentSkipBlockIndex + 1);
-                this.loader = new LoadingPostingListBlock(nextBlock);
-                this.future = executor.submit(loader);
+                LoadingPostingListBlock loader = new LoadingPostingListBlock(nextBlock);
+                Future<Pair<int[],int[]>> future = executor.submit(loader);
+                this.threadInfo = new Pair<LoadingPostingListBlock, Future<Pair<int[],int[]>>>(loader, future);
 
         }
         this.loadedSkipBlock = sb;
@@ -428,11 +428,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         this.nextRecordIndex = 0;
         this.nextRecordIndexInBlock = 0;
         this.currentPosting = null;
-        if(useThreads && this.future != null){
-            this.future.cancel(true);
+        if(useThreads && this.threadInfo != null){
+            this.threadInfo.getValue().cancel(true);
         }
-        this.future = null;
-        this.loader = null;
+        this.threadInfo = null;
         //try{
         //    this.docIdsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
         //    this.freqsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
@@ -448,8 +447,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     public void close() {
         this.freqsBinaryFileManager.close();
         this.freqsBinaryFileManager.close();
-        if(this.future != null){
-            this.future.cancel(true);
+        if(this.threadInfo != null){
+            this.threadInfo.getValue().cancel(true);
         }
     }
 
