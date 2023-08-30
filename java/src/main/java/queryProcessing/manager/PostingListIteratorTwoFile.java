@@ -19,11 +19,12 @@ import java.util.concurrent.Future;
 
 public class PostingListIteratorTwoFile implements PostingListIterator {
 
-    protected static final int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
+    //protected static final int skipBlockMaxLen = ConfigLoader.getIntProperty("skipblocks.maxLen");
     public static final boolean useCache = ConfigLoader.getPropertyBool("performance.iterators.useCache");
     public static final boolean useThreads = ConfigLoader.getPropertyBool("performance.iterators.useThreads");
     public static final int howManyThreads = ConfigLoader.getIntProperty("performance.iterators.threads.howMany");
     public static final int cacheSize = ConfigLoader.getIntProperty("performance.iterators.cache.size");
+    public static final boolean debug = ConfigLoader.getPropertyBool("performance.iterators.debug");
 
     protected int[] docIdsDecompressed;
     protected int[] freqsDecompressed ;
@@ -125,7 +126,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
             return null;
         }
 
-        if(nextRecordIndex % skipBlockMaxLen == 0 ) {    // || nextRecordIndexInBlock == docIdsDecompressed.length
+        if(this.reachedBlockEnd()) {
             // load current skipblock
 
             if(nextRecordIndex == 0){
@@ -154,6 +155,17 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         return this.currentPosting = new Posting(docId, freq);
     }
 
+    private boolean reachedBlockEnd(){
+        if(this.loadedSkipBlock == null || this.docIdsDecompressed == null){
+            // case in which there is no block currently loaded
+            return true;
+        }
+        if(this.nextRecordIndexInBlock >= this.docIdsDecompressed.length){
+            return true;
+        }
+        return false;
+    }
+
     protected LRUCache<SkipBlock, Pair<int[], int[]>> cache = useCache ? new LRUCache<SkipBlock, Pair<int[], int[]>>(cacheSize, null) : null;
 
     public class LoadingPostingListBlock implements Callable<Pair<int[], int[]>> {
@@ -173,7 +185,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         @Override
         public Pair<int[], int[]> call(){
             if(this.nextSB == null){
-                System.out.println("Called a thread passing a null parameter");
+                if(debug) System.out.println("Called a thread passing a null parameter");
                 return null;
             }
 
@@ -184,9 +196,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 docIdsDecompressedNextBlock = threadDocIdsBinaryFileManager.readIntArray(this.nextSB.getDocIdByteSize(), this.nextSB.getDocIdFileOffset(), this.nextSB.getHowManyPostings());
                 freqsDecompressedNextBlock  = threadFreqsBinaryFileManager.readIntArray(this.nextSB.getFreqByteSize(), this.nextSB.getFreqFileOffset(), this.nextSB.getHowManyPostings()   );
             } catch (Exception e) {
+                if(debug){
                 e.printStackTrace();
                 System.out.println("Exception in thread for term iterator: " + term);
                 System.out.println("SkipBlock that was trying to read: " + this.nextSB.toString());
+                }
                 return null;
             }
             Pair<int[], int[]> ret = new Pair<int[], int[]>(docIdsDecompressedNextBlock, freqsDecompressedNextBlock);
@@ -198,16 +212,23 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         }
     }
 
-    private Future<Pair<int[], int[]>> future;
-    private LoadingPostingListBlock loader;
+    //private Future<Pair<int[], int[]>> future;
+    //private LoadingPostingListBlock loader;
+
+    private Pair<LoadingPostingListBlock, Future<Pair<int[], int[]>>> threadInfo;
 
     private SkipBlock loadedSkipBlock;
+
+    private final int LOADING_NUM_RETRIES = 2;
     /**
      * resets nextRecordIndexInBlock to 0
      * loads docIds and frequencies buffer for the current skip block
      * @return false in case of error
      */
     private boolean loadPostingListCurrentSkipBlock(){
+        return this.loadPostingListCurrentSkipBlock(LOADING_NUM_RETRIES);
+    }
+    private boolean loadPostingListCurrentSkipBlock(int numRetries){
         SkipBlock sb = this.getCurrentSkipBlock();
 
         if(sb == null){
@@ -217,7 +238,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         this.nextRecordIndexInBlock = 0;
 
-        if(sb.equals(loadedSkipBlock)){
+        if(sb.equals(loadedSkipBlock)
+                && docIdsDecompressed != null
+                && docIdsDecompressed.length == sb.getHowManyPostings()
+                && docIdsDecompressed[docIdsDecompressed.length - 1] == sb.getMaxDocId()){
             // case in which the currentSkipBlock was already loaded
             return true;
         }
@@ -231,13 +255,12 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         else if(outcome == null && useThreads){
             try {
 
-                if (future != null && loader.nextSB.equals(sb) && (outcome = future.get()) != null){
+                if (this.threadInfo != null && this.threadInfo.getKey().nextSB.equals(sb) && (outcome = this.threadInfo.getValue().get()) != null){
 
                     this.docIdsDecompressed = outcome.getKey();
                     this.freqsDecompressed  = outcome.getValue();
                     
-                    future = null;
-                    loader = null;
+                    this.threadInfo = null;
 
                     if(useCache){
                         this.cache.put(sb, outcome);
@@ -250,10 +273,9 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         }
         if(outcome == null){
 
-            if(useThreads && this.future != null){
-                this.future.cancel(true);
-                this.future = null;
-                this.loader = null;
+            if(useThreads && this.threadInfo != null){
+                this.threadInfo.getValue().cancel(true);
+                this.threadInfo = null;
             }
 
             try {
@@ -266,26 +288,50 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("Exception in Iterator main thread, current term: " + term);
+                System.out.println("Exception in Iterator main thread, current term: " + term + " num retries left: " + numRetries);
+                this.loadedSkipBlock = null;
+                this.docIdsDecompressed = null;
+                this.freqsDecompressed = null;
+                if(numRetries > 0){
+                    return this.loadPostingListCurrentSkipBlock(numRetries - 1);
+                }
+                System.exit(-1);
                 return false;
             }
 
         }
 
         if(this.hasNextSkipBlock() && useThreads){
-                if(this.future != null){
-                    this.future.cancel(true);
-                    this.loader = null;
-                    this.future = null;
+                if(this.threadInfo != null){
+                    this.threadInfo.getValue().cancel(true);
+                    this.threadInfo = null;
                 }
 
                 SkipBlock nextBlock = this.getSkipBlockAt(currentSkipBlockIndex + 1);
-                this.loader = new LoadingPostingListBlock(nextBlock);
-                this.future = executor.submit(loader);
+                LoadingPostingListBlock loader = new LoadingPostingListBlock(nextBlock);
+                Future<Pair<int[],int[]>> future = executor.submit(loader);
+                this.threadInfo = new Pair<LoadingPostingListBlock, Future<Pair<int[],int[]>>>(loader, future);
 
         }
+        //if(sb.getHowManyPostings() == this.docIdsDecompressed.length 
+        //    && sb.getMaxDocId() == this.docIdsDecompressed[sb.getHowManyPostings() - 1]){
         this.loadedSkipBlock = sb;
         return true;
+        //}else{
+        //    if(numRetries == LOADING_NUM_RETRIES){
+        //        System.out.println();
+        //    }
+        //    System.out.println("[+++] loaded wrong data [+++] for term '" + term + "' num retries left: " + numRetries + 
+        //    " currentSBIndex: " + currentSkipBlockIndex + " howManySB: " + howManySkipBlocks + 
+        //    " sb.HowManyPostings: " + sb.getHowManyPostings() + " sb.maxdocid: " + sb.getMaxDocId() +
+        //    " loaded data size: "+ this.docIdsDecompressed.length + " maxdocid loaded: " + this.docIdsDecompressed[this.docIdsDecompressed.length - 1]);
+        //    if(numRetries > 0)
+        //        return this.loadPostingListCurrentSkipBlock(numRetries - 1);
+        //    System.out.println("[x] max num retries exceeded, exiting ... [x]");
+        //    System.exit(0);
+        //    return false;
+        //}
+
     }
 
     @Override
@@ -300,6 +346,10 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     @Override
     public Posting nextGEQ(long docId) {
+        return this.nextGEQ(docId, 1);
+    }
+
+    private Posting nextGEQ(long docId, int numRetries) {
 
         Posting currPosting = this.getCurrentPosting();
 
@@ -312,11 +362,16 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         if(sb.getMaxDocId() < docId || this.getCurrentPosting() == null){   // this.getCurrentPosting() == null case in which the postings block has still to be loaded
             // move to the right skipBlock (skipping the ones that don't contain required docId)
             
+            this.nextRecordIndex -= this.nextRecordIndexInBlock;
+            
             while(docId > sb.getMaxDocId()){
                 // iterate until the current skipBlock contains the docId
                 if(this.hasNextSkipBlock()){
+                    
+                    this.nextRecordIndex += sb.getHowManyPostings();
                     currentSkipBlockIndex += 1;
                     sb = this.getCurrentSkipBlock();
+                    
                 }else{
                     //the skip blocks are finished and I have not found a Posting whose docId is >= requested docId
                     this.nextRecordIndex = this.howManyRecords;
@@ -324,12 +379,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
                 }
             }
 
-            this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen;
-
             this.loadPostingListCurrentSkipBlock();
         }
 
         //we can perform binary search to retrieve the first Posting GEQ
+        this.nextRecordIndex -= this.nextRecordIndexInBlock;
 
         int lowerBound = 0;
 
@@ -346,14 +400,23 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
                 if(middle == lowerBound){
                     nextRecordIndexInBlock = upperBound;
-                    this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
+                    this.nextRecordIndex += this.nextRecordIndexInBlock;
                     int docuId = docIdsDecompressed[nextRecordIndexInBlock];
                     int freq = freqsDecompressed[nextRecordIndexInBlock];
                     if(docuId < docId){
                         System.out.println("error!" + "nextGEQ(" + docId + ") docuId returned: " + docuId + " indexInBlock: " + nextRecordIndexInBlock +
-                            " upperBound: " + upperBound + " sb.maxdocid: " + sb.getMaxDocId());
+                            " upperBound: " + upperBound + " sb.maxdocid: " + sb.getMaxDocId() + "term: " + term + " numretries: " + numRetries);
                         //System.exit(0);
+                        if(numRetries > 0){
+                            Posting ret = this.nextGEQ(middleDocId, numRetries - 1);
+                            System.out.println("Posting returned after numretries " + numRetries + " left: " + ret.toString());
+                            return ret;
+                        }
+                        //System.exit(-1);
+                        return null;
                     }
+                    this.nextRecordIndex++;
+                    this.nextRecordIndexInBlock++;
                     return this.currentPosting = new Posting(docuId, freq);
                 }
 
@@ -362,9 +425,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
             }else if(middleDocId == docId){
                 nextRecordIndexInBlock = middle;
-                this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
+                this.nextRecordIndex += this.nextRecordIndexInBlock;
                 int docuId = docIdsDecompressed[nextRecordIndexInBlock];
                 int freq = freqsDecompressed[nextRecordIndexInBlock];
+                this.nextRecordIndex++;
+                this.nextRecordIndexInBlock++;
                 return this.currentPosting = new Posting(docuId, freq);
             }else{
                 // when we have middlePosting.getDocid() > docId
@@ -377,9 +442,11 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
         if(middleDocId >= docId){
             nextRecordIndexInBlock = middle;
-            this.nextRecordIndex = this.currentSkipBlockIndex * PostingListIteratorTwoFile.skipBlockMaxLen + this.nextRecordIndexInBlock;
+            this.nextRecordIndex += this.nextRecordIndexInBlock;
             int docuId = docIdsDecompressed[nextRecordIndexInBlock];
             int freq = freqsDecompressed[nextRecordIndexInBlock];
+            nextRecordIndex++;
+            nextRecordIndexInBlock++;
             return this.currentPosting = new Posting(docuId, freq);
         }else{
             this.nextRecordIndexInBlock = sb.getHowManyPostings();
@@ -398,19 +465,14 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
         this.nextRecordIndex = 0;
         this.nextRecordIndexInBlock = 0;
         this.currentPosting = null;
-        if(useThreads && this.future != null){
-            this.future.cancel(true);
+        this.loadedSkipBlock = null;
+        this.docIdsDecompressed = null;
+        this.freqsDecompressed = null;
+        if(useThreads && this.threadInfo != null){
+            this.threadInfo.getValue().cancel(true);
         }
-        this.future = null;
-        this.loader = null;
-        //try{
-        //    this.docIdsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
-        //    this.freqsBinaryFileManager.seek(this.getCurrentSkipBlock().getDocIdFileOffset());
-        //}catch(IOException e){
-        //    e.printStackTrace();
-        //}catch(Exception e){
-        //    e.printStackTrace();
-        //}
+        this.threadInfo = null;
+
         this.loadPostingListCurrentSkipBlock();
     }
 
@@ -418,8 +480,8 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
     public void close() {
         this.freqsBinaryFileManager.close();
         this.freqsBinaryFileManager.close();
-        if(this.future != null){
-            this.future.cancel(true);
+        if(this.threadInfo != null){
+            this.threadInfo.getValue().cancel(true);
         }
     }
 

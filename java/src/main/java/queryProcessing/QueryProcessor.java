@@ -13,6 +13,7 @@ import common.manager.block.DocumentIndexBlockManager;
 import config.ConfigLoader;
 import preprocessing.Preprocessor;
 import queryProcessing.DocumentProcessor.*;
+import queryProcessing.manager.PostingListIteratorFactory;
 import queryProcessing.manager.VocabularyManager;
 import queryProcessing.scoring.BM25;
 import queryProcessing.scoring.ScoreFunction;
@@ -60,6 +61,7 @@ public class QueryProcessor {
         System.out.println("Using DocumentProcessorType: " + documentProcessorType.toString());
         System.out.println("Using queryType: " + queryType.toString());
         System.out.println("Using scoringFunctionType: " + scoringFunctionType.toString());
+        PostingListIteratorFactory.printInfos();
 
         this.documentProcessorType = documentProcessorType;
 

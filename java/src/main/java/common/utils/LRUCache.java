@@ -78,4 +78,11 @@ public class LRUCache<KeyType, ValueType> {
     public Collection<ValueType> values(){
         return this.map.values();
     }
+    /**
+     * Returns the number of key-value mappings in this cache.
+     * @return the number of key-value mappings in this cache
+     */
+    public int size(){
+        return this.map.size();
+    }
 }
