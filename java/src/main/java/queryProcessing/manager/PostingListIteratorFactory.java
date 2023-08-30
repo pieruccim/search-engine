@@ -24,6 +24,7 @@ public class PostingListIteratorFactory {
     protected static final boolean useThreads = ConfigLoader.getPropertyBool("performance.iteratorFactory.threads.enabled");
     private static final int howManyThreads = ConfigLoader.getIntProperty("performance.iteratorFactory.threads.howMany");
     private static ExecutorService executor = useThreads ? Executors.newFixedThreadPool(howManyThreads) : null;
+    private static final boolean debug = ConfigLoader.getPropertyBool("performance.iteratorFactory.debug");
 
     private final static LRUCache<String, PostingListIterator> LRUcache = new LRUCache<String, PostingListIterator>(cacheSize, (PostingListIterator p) -> {p.close(); return true;});
 
@@ -98,16 +99,16 @@ public static void openIterators(List<? extends VocabularyFileRecord> records, A
                         pl = record.getValue().get();
 
                 } catch (InterruptedException e) {
-                    //e.printStackTrace();
+                    if(debug) System.out.print("Interrupted Exception - ");
                     pl = null;
                 } catch (ExecutionException e) {
-                    //e.printStackTrace();
+                    if(debug) System.out.print("Execution Exception - " + e.getMessage() + " - ");
                     pl = null;
                 }
                 if(pl == null){
                     if(record.getValue() != null)
                         record.getValue().cancel(true);
-                    System.out.println("Loading iterator in main thread for the term: " + record.getKey().getTerm());
+                    if(debug) System.out.println("Loading iterator in main thread for the term: " + record.getKey().getTerm());
                     pl = openIterator(record.getKey());
                 }
                 retList.add(new Pair<VocabularyFileRecord, PostingListIterator>(record.getKey(), pl));

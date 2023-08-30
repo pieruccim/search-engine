@@ -27,3 +27,4 @@ scoring.BM25.k1=1.2
 scoring.BM25.B=0.75
 performance.iteratorFactory.threads.enabled=true
 performance.iteratorFactory.threads.howMany=10
+performance.iteratorFactory.debug=true
