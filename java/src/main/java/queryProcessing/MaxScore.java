@@ -20,12 +20,9 @@ public class MaxScore extends DocumentProcessor{
     protected double threshold;
 
     public MaxScore(){
-        this.threshold = ConfigLoader.getDoubleProperty("scoring.MaxScore.threshold");
+        this.threshold = 0;//ConfigLoader.getDoubleProperty("scoring.MaxScore.threshold");
     }
 
-    public MaxScore(double threshold){
-        this.threshold = threshold;
-    }
 
     /**
      * this method must receive a List of VocabularyFileRecordUB, so that it can access to the upperbound information for each query term
@@ -42,9 +39,41 @@ public class MaxScore extends DocumentProcessor{
     protected static final Comparator<? super VocabularyFileRecordUB> comparatorUB = Comparator.comparing(VocabularyFileRecordUB::getUpperBound);
 
     private ArrayList<Pair<VocabularyFileRecord, PostingListIterator>> allTermIteratorPairs = new ArrayList<Pair<VocabularyFileRecord, PostingListIterator>>();
-    private ArrayList<Pair<VocabularyFileRecord, PostingListIterator>> essentialTermIteratorPairs = new ArrayList<Pair<VocabularyFileRecord, PostingListIterator>>();
-    private ArrayList<Pair<VocabularyFileRecord, PostingListIterator>> nonEssentialtermIteratorPairs = new ArrayList<Pair<VocabularyFileRecord, PostingListIterator>>();
+    private List<Pair<VocabularyFileRecord, PostingListIterator>> essentialTermIteratorPairs;
+    private List<Pair<VocabularyFileRecord, PostingListIterator>> nonEssentialtermIteratorPairs;
 
+    private double nonEssentialTermUpperBound;
+
+    /**
+     * returns the index of the last nonEssential term
+     * if the value returned is -1, then no document can achieve a score higher than the threshold
+     * @param qT
+     * @return
+     */
+    private int updateEssentialTermsIterators(List<VocabularyFileRecordUB> qT, int previousBound){
+        double sum = 0;
+        nonEssentialTermUpperBound = 0;
+
+        int bound = -1;
+        for (int i = 0; i < qT.size(); i++) {
+            sum += qT.get(i).getUpperBound();
+
+            if(sum < threshold){
+                nonEssentialTermUpperBound = sum;
+                bound = i;
+            }else{
+                break;
+            }
+        }
+        if(bound != previousBound){
+
+            this.nonEssentialtermIteratorPairs = allTermIteratorPairs.subList(0, bound + 1);
+            this.essentialTermIteratorPairs    = allTermIteratorPairs.subList(bound + 1, allTermIteratorPairs.size());
+            // the objects will not be copied; references to the same objects will be added to the list
+        }
+
+        return bound;
+    }
     /**
      * this method must receive a List of VocabularyFileRecordUB, so that it can access to the upperbound information for each query term
      */
@@ -58,36 +87,18 @@ public class MaxScore extends DocumentProcessor{
         qT.sort(comparatorUB);
 
         allTermIteratorPairs.clear();
-        essentialTermIteratorPairs.clear();
-        nonEssentialtermIteratorPairs.clear();
 
-        double sum = 0;
-        double nonEssentialTermUpperBound = 0;
-
-        int bound = -1;
-        for (int i = 0; i < qT.size(); i++) {
-            sum += qT.get(i).getUpperBound();
-
-            if(sum < threshold){
-                nonEssentialTermUpperBound = sum;
-                bound = i;
-            }else{
-                break;
-            }
-        }
-
-
+        this.threshold = 0;
+        int howManyTerms = qT.size();
+        
         PostingListIteratorFactory.openIterators(qT, allTermIteratorPairs);
-        nonEssentialtermIteratorPairs.addAll(allTermIteratorPairs.subList(0, bound + 1));
-        essentialTermIteratorPairs.addAll(allTermIteratorPairs.subList(bound + 1, allTermIteratorPairs.size()));
-        // the objects will not be copied; references to the same objects will be added to the list
 
+        int bound = updateEssentialTermsIterators(qT, -2);
 
         // here we perform DAAT over the essentialIterators
 
         // we need to obtain the lowest docID's score among the docIDs that are present in the essential posting lists
         int currentDocId = -1;
-        double minScoreThreshold = -1;
 
         double currentPartialScore;
 
@@ -95,19 +106,21 @@ public class MaxScore extends DocumentProcessor{
         while( ! essentialPostingListAreEnded ){
 
             if(queryType == QueryType.DISJUNCTIVE){
-                currentDocId = getNextDocumentId(essentialTermIteratorPairs, currentDocId);
+                currentDocId = getNextDocumentId(this.essentialTermIteratorPairs, currentDocId);
+
             }else{
                 // when query type is conjunctive, the next docID must be retrieved by checking 
                 // all the posting lists iterators
                 currentDocId = getNextDocumentIdConjunctive(allTermIteratorPairs, currentDocId);
 
             }
+
             if(currentDocId == -1){
                 essentialPostingListAreEnded = true;
                 continue;
             }
 
-            currentPartialScore = computeDocumentScore(essentialTermIteratorPairs, currentDocId, scoringFunction);
+            currentPartialScore = computeDocumentScore(this.essentialTermIteratorPairs, currentDocId, scoringFunction);
             //System.out.println("docID: " + currentDocId + "\t partialScore: " + currentPartialScore);
             double currentUpperBound = currentPartialScore + nonEssentialTermUpperBound;
 
@@ -119,7 +132,7 @@ public class MaxScore extends DocumentProcessor{
 
 
             // sum the term upper bounds for all non-essential posting lists
-            for (int i = nonEssentialtermIteratorPairs.size() - 1; i >= 0; i--) {
+            for (int i = (nonEssentialtermIteratorPairs.size() - 1); i >= 0; i--) {
                 // we start computing the effective score for the document in each posting list starting from the one with
                 // the highest upperbound
 
@@ -129,14 +142,12 @@ public class MaxScore extends DocumentProcessor{
 
                 Posting posting = currentIterator.getCurrentPosting();
 
+                if( queryType != QueryType.CONJUNCTIVE && currentIterator.hasNext() && (posting == null || posting.getDocid() < currentDocId) ){
+                    posting = currentIterator.nextGEQ(currentDocId);
+                }    
+
                 if (posting != null && posting.getDocid() == currentDocId) {
                     currentUpperBound += scoringFunction.documentWeight(currentVocabularyFileRecord, posting);
-                }else if(currentIterator.hasNext() && queryType != QueryType.CONJUNCTIVE){ 
-                    // when the query type is conjunctive, the iterators are moved only by the method getNextDocumentIdConjunctive
-                    posting = currentIterator.nextGEQ(currentDocId);
-                    if(posting != null && posting.getDocid() == currentDocId){
-                    currentUpperBound += scoringFunction.documentWeight(currentVocabularyFileRecord, posting);
-                    }
                 }
                 
                 // we can remove the upper bound relative to the current posting list, since we computed the document's effective score for that posting list
@@ -154,15 +165,21 @@ public class MaxScore extends DocumentProcessor{
             }
 
             // if we arrive here, we have the effective document score inside currentUpperBound and the docId inside currentDocId
-            // uadd the current document score
-            if(currentUpperBound > minScoreThreshold){
+            // add the current document score
+            if(currentUpperBound > this.threshold){
                 DocumentScore tmp = new DocumentScore(currentDocId, currentUpperBound);
                 priorityQueue.add(tmp);
                 //System.out.println("Adding documentscore tuple to results: " + tmp.toString() + "current treemap size: " + priorityQueue.size());
                 if (priorityQueue.size() > k) {
                     //removes from bottom
                     tmp = priorityQueue.pollLast();
-                    minScoreThreshold = tmp.getScore();
+                    this.threshold = tmp.getScore();
+                    bound = updateEssentialTermsIterators(qT, bound);
+
+                    if(bound == howManyTerms - 1){
+                        essentialPostingListAreEnded = true;
+                        break;
+                    }
                     //System.out.println("Removed the documentscore: " + tmp.toString());
                 }
             }
@@ -190,14 +207,14 @@ public class MaxScore extends DocumentProcessor{
      * - advances the given iterators to the selected nextDocId
      * - returns -1 in case there are no other documents to be processed
      */
-    private int getNextDocumentId(List<Pair<VocabularyFileRecord, PostingListIterator>> termIteratorPairs,
+    private int getNextDocumentId(List<Pair<VocabularyFileRecord, PostingListIterator>> termIteratorPairsEss,
          int lastDocId){
 
             int nextDocId = Integer.MAX_VALUE;
             Posting posting = null;
             boolean allDone = true;
 
-            for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairs) {
+            for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairsEss) {
                 PostingListIterator postingListIterator = pair.getValue();
                 posting = postingListIterator.getCurrentPosting();
 
@@ -288,11 +305,11 @@ public class MaxScore extends DocumentProcessor{
             return nextDocId;
     }
 
-    private double computeDocumentScore(List<Pair<VocabularyFileRecord, PostingListIterator>> termIteratorPairs, int docId, ScoreFunction scoringFunction) {
+    private double computeDocumentScore(List<Pair<VocabularyFileRecord, PostingListIterator>> termIteratorPairss, int docId, ScoreFunction scoringFunction) {
 
         double score = 0;
 
-        for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairs) {
+        for (Pair<VocabularyFileRecord, PostingListIterator> pair : termIteratorPairss) {
             PostingListIterator iterator = pair.getValue();
             Posting posting = iterator.getCurrentPosting();
             if (posting != null && posting.getDocid() == docId) {
