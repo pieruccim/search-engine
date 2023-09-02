@@ -159,7 +159,6 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
 
     @Override
     public void writeRow(ArrayList<Posting> r) throws Exception {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'writeRow'");
     }
 
@@ -230,7 +229,6 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
     
     @Override
     public ArrayList<Posting> readRow() throws Exception {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'readRow'");
     }
     /**

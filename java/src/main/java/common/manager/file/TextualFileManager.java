@@ -213,7 +213,6 @@ public class TextualFileManager extends FileManager{
             try {
                 this.tarInput.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -221,7 +220,6 @@ public class TextualFileManager extends FileManager{
             try {
                 this.tarGzInput.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }

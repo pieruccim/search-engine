@@ -396,7 +396,6 @@ public class Indexer {
                     try {
                         sb = arraySkipBlockManagers[blockId].readRowAt(firstSkipBlockOffset + i * SkipBlock.SKIP_BLOCK_ENTRY_SIZE);
                     } catch (Exception e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                         System.exit(-1);
                     }
