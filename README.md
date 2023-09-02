@@ -1,11 +1,11 @@
-# Search Engine
+# Search Engine 🔍
 
 Search engine that conducts text retrieval opeartions on an extensive compilation of 8.8 million documents available [here](https://microsoft.github.io/msmarco/TREC-Deep-Learning-2020) The project is split upon two primary stages: 
 
 - Document Indexing, which consists in developing data structures and mechanisms required for efficient retrieval
 * Query Execution, which focuses in using data structures and queries provided by a user to retrieve most relevant document in the collection
 
-## Performances
+## Performances 🚀
 
 In the following plots are displayed performances of the Search Engine both in Conjunctive and Disjunctive queries using TFIDF as scoring function and particular parameters configurations:
 
@@ -14,14 +14,14 @@ In the following plots are displayed performances of the Search Engine both in C
 | --------- | --------- |
 | ![CONJUNCTIVE](https://github.com/pieruccim/search-engine/assets/75124117/f76fe541-d636-4172-ae62-da6182daca24)  |  ![DISJUNCTIVE](https://github.com/pieruccim/search-engine/assets/75124117/09e8a72a-19f7-49dc-94b8-0a98da9473aa) |
 
-## Project Structure and Modules
+## Project Structure and Modules 📁
 
 The Search Engine is composed by the following main modules:
 
 - Common, which contains bean classes and managers used by other modules
-+ Preprocessing, which is in charge of cleaning, tokenizing, stemming and stopword removing document and query text
++ Preprocessing , which is in charge of cleaning, tokenizing, stemming and stopword removing document and query text
 * Indexing, which performs indexing of the collection saving main data structures on disk and executing merging of them
-* Query processing, which performs processing of queries using different Document Processors and Scoring Functions
+* Query processing , which performs processing of queries using different Document Processors and Scoring Functions
 
 
 ## How to configure and compile modules
