@@ -12,7 +12,8 @@ In the following plots are displayed performances of the Search Engine both in C
 
 | CONJUNCTIVE | DISJUNCTIVE |
 | --------- | --------- |
-| ![CONJUNCTIVE](https://github.com/pieruccim/search-engine/assets/75124117/f76fe541-d636-4172-ae62-da6182daca24)  |  ![DISJUNCTIVE](https://github.com/pieruccim/search-engine/assets/75124117/09e8a72a-19f7-49dc-94b8-0a98da9473aa) |
+| ![CONJUNCTIVE-1](https://github.com/pieruccim/search-engine/assets/75124117/e9211f9f-79a0-4171-9af2-0bf47144483e) | ![DISJUNCTIVE-1](https://github.com/pieruccim/search-engine/assets/75124117/0cfbfc51-8e47-4ac1-9665-d7d83bafea28) |
+
 
 ## Project Structure and Modules 📁
 
