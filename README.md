@@ -24,7 +24,6 @@ The Search Engine is composed by the following main modules:
 * Indexing, which performs indexing of the collection saving main data structures on disk and executing merging of them
 * Query processing , which performs processing of queries using different Document Processors and Scoring Functions
 
-
 ## How to configure and compile modules
 
 ### Indexing module
@@ -70,6 +69,13 @@ Performance properties:
 | *performance.iteratorFactory.cache.size* | Set the cache size for Posting List Iterators               |
 | *performance.iteratorFactory.threads.enabled* | Enable threads for Posting List Iterators              |
 | *performance.iteratorFactory.threads.howMany* | Set the number of threads for Posting List Iterators   |
+
+
+#### Execution Path
+Run the code from the `/java` folder. 
+
+Specify the absolute path for the collection to be indexed inside config.properties at entry `data.collection.path`.
+
 
 #### Compiling properties
 
