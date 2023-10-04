@@ -10,7 +10,7 @@ import common.bean.Posting;
 import common.bean.SkipBlock;
 import common.manager.file.BinaryFileManager;
 import common.manager.file.FileManager.MODE;
-import common.manager.file.compression.DeltaCompressor;
+import common.manager.file.compression.DGapCompressor;
 import common.manager.file.compression.UnaryCompressor;
 import config.ConfigLoader;
 
@@ -103,7 +103,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             emptyPath(f);
         }
         if(this.useCompression){
-            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE, new DeltaCompressor());
+            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE, new DGapCompressor());
             this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.WRITE, new UnaryCompressor());
         }else{
             this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.WRITE);
@@ -139,7 +139,7 @@ public class SplittedInvertedIndexBlockManager extends BinaryBlockManager<ArrayL
             throw new IOException("file " + this.freqsBlockPath + " doesn't exist");
         }
         if(this.useCompression){
-            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ, new DeltaCompressor());
+            this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ, new DGapCompressor());
             this.freqBinaryFileManager = new BinaryFileManager(this.freqsBlockPath, MODE.READ,  new UnaryCompressor());
         }else{
             this.docIdBinaryFileManager = new BinaryFileManager(this.docIdsBlockPath, MODE.READ);

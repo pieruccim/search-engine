@@ -2,7 +2,7 @@ package common.manager.file.compression;
 
 import java.io.IOException;
 
-public class DeltaCompressorMain {
+public class DGapCompressorMain {
 
     public static String printBits(byte b) {
         String ret = "";
@@ -14,9 +14,9 @@ public class DeltaCompressorMain {
     }
 
     public static void main(String[] args) throws IOException {
-        int[] integers = {146, 295, 316, 334, 337, 460, 618, 911, 968, 1011, 1248, 1252, 1368, 1382}; // Example array of integers to compress
+        int[] integers = {146, 150, 155}; // Example array of integers to compress
 
-        DeltaCompressor dc = new DeltaCompressor();
+        DGapCompressor dc = new DGapCompressor();
         byte[] compressedData = dc.compressIntArray(integers);
 
         System.out.print("Compressed integers: ");

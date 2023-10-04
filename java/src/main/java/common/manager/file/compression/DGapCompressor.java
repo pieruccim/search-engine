@@ -2,12 +2,12 @@ package common.manager.file.compression;
 
 import java.io.IOException;
 
-public class DeltaCompressor implements Compressor{
+public class DGapCompressor implements Compressor{
 
     private VariableByteCompressor variableByteCompressor = null;
 
 
-    public DeltaCompressor(){
+    public DGapCompressor(){
         variableByteCompressor = new VariableByteCompressor();
     }
 

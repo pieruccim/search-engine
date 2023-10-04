@@ -4,7 +4,7 @@ import common.bean.*;
 import common.manager.block.SkipBlockBlockManager;
 import common.manager.file.BinaryFileManager;
 import common.manager.file.FileManager.*;
-import common.manager.file.compression.DeltaCompressor;
+import common.manager.file.compression.DGapCompressor;
 import common.manager.file.compression.UnaryCompressor;
 import common.utils.LRUCache;
 import config.ConfigLoader;
@@ -61,7 +61,7 @@ public class PostingListIteratorTwoFile implements PostingListIterator {
 
     private BinaryFileManager createNewDocIdsFileManager(){
         if(useCompression){
-            return new BinaryFileManager(docIdsPath, MODE.READ, new DeltaCompressor());
+            return new BinaryFileManager(docIdsPath, MODE.READ, new DGapCompressor());
         }else{
             return new BinaryFileManager(docIdsPath, MODE.READ);
         }
